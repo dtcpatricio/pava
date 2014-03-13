@@ -1,0 +1,34 @@
+<project name="lab02" default="compile" basedir=".">
+	<description>Second Lab of PAva</description>
+
+	<property name="src.dir" location="src" />
+	<property name="classes.dir" location="classes" />
+
+	<property name="run.mainclass" value="pt.ist.ap.labs.Main" />
+
+	<path id="project.classpath">
+	        <pathelement location="${classes.dir}" />
+	</path>
+	
+	<target name="init">
+		<mkdir dir="${classes.dir}" />
+	</target>
+	
+	<target name="clean"
+		description="Delete build directory" >
+	    <delete dir="${classes.dir}" />
+	    </target>
+
+	<target name="compile" depends="init" description="Compile source code">
+		<javac srcdir="${src.dir}" destdir="${classes.dir}"
+		includeantruntime="false" debug="true">
+			 <classpath refid="project.classpath" />
+		</javac>
+	</target>
+
+	<target name="run" depends="compile" description="Run program">
+		<java classname="${run.mainclass}" fork="false">
+			 <classpath refid="project.classpath" />
+		</java>
+	</target>
+</project>
