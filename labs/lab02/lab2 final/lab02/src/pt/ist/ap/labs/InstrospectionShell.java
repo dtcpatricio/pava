@@ -153,7 +153,7 @@ public class InstrospectionShell {
 				
 				Object o = null;
 
-				Object[] result = null;
+				
 				
 				if(command.length >= 2) {
 					Method[] ms = previous.get(previous.size() - 1).getClass().getMethods();
@@ -201,13 +201,22 @@ public class InstrospectionShell {
 				}
 				else {
 					Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0]);
-					result = (Object[])m.invoke(previous.get(previous.size() - 1));
+					Object result = m.invoke(previous.get(previous.size() - 1));
 				
 					previous.clear();
-					for(int i = 0; i < result.length; i++) {
-						previous.add(result[i]);
-						System.out.println(result[i]);
+					
+					if(result.getClass().isArray()) {
+						Object[] resultArray = (Object[])result;
+						for(int i = 0; i < resultArray.length; i++) {
+							previous.add(resultArray[i]);
+							System.out.println(resultArray[i]);
+						}
 					}
+					else {
+						previous.add(result);
+						System.out.println(result);
+					}
+					
 				}
 				
 			}
