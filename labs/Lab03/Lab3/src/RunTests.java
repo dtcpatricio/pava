@@ -3,9 +3,6 @@ import java.lang.reflect.*;
 import java.util.Scanner;
 import java.util.TreeMap;
 
-// setAccessible true, altera o visibilidade do método para public?
-// Pq é que o m10 dá failed? (public static void)
-// Não existe forma de descobrir uma subclass?, a forma implementada pode ser considerada correcta?
 public class RunTests {
 	static int passed = 0;
 	static int failed = 0;
@@ -22,13 +19,19 @@ public class RunTests {
 	    						  try {
 	    							  Test anTest = (Test) ann;
 	    							  String[] anParameters = anTest.value();
-	    							  for(String s: anParameters) {
-	    								  // When dealing with '*', execute EVERY setup method??
-	    								/*  if(s.equals("*")) {
-	    									  System.out.println("Found a *");
-	    								  }*/
-	    								  setupMethods.get(s).setAccessible(true);
-	    								  setupMethods.get(s).invoke(null);
+	    							  if(!setupMethods.isEmpty()) {
+		    							  for(String s: anParameters) {
+		    								  // When dealing with '*', execute EVERY setup method??
+		    								  if(s.equals("*")) {
+		    									  for(Method meth : setupMethods.values()) {
+		    										  meth.setAccessible(true);
+		    										  meth.invoke(null);
+		    									  }
+		    								  } else {
+		    									  setupMethods.get(s).setAccessible(true);
+		    									  setupMethods.get(s).invoke(null);
+		    								  }
+		    							  }
 	    							  }
 	    							  m.setAccessible(true);
 	    							  m.invoke(null);
@@ -50,17 +53,16 @@ public class RunTests {
 	  TreeMap<String, Method> setupMethods = new TreeMap<String, Method>();
 	  Scanner scan = new Scanner(System.in);
 	  String input = scan.nextLine();
-	  Class<?> testClass = Class.forName(input);
-	  String superClassName = testClass.getSuperclass().getName();
-	  Class<?> testSuperClass = null;
 	  
-	  if(!superClassName.equals("java.lang.Object")) {
-		  System.out.println("Class has superclass... " + testClass.getSuperclass().getName());
+	  Class<?> testClass = Class.forName(input);
+	  Class<?> testSuperClass = testClass.getSuperclass();
+	  
+	  //Invoca-se java.lang.object como está, o prof disse para usar o isAssignableFrom ... 
+	  if(testSuperClass.isAssignableFrom(testClass)) {
 		  testSuperClass = testClass.getSuperclass();
-	  }
-	  if(testSuperClass != null) {
 		  runTests(setupMethods, testSuperClass);
 	  }
+	  
 	  runTests(setupMethods, testClass);
 	  
       System.out.printf("Passed: %d, Failed %d%n", passed, failed);
