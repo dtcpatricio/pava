@@ -152,40 +152,52 @@ public class InstrospectionShell {
 				System.out.println("Trying generic command: " + command[0]);
 				
 				Object o = null;
-				
-				/* input has parameters? */
-				/*if(command.length >= 2) {
-					Constructor<String> c = String.class.getConstructor(String.class);
-					o = c.newInstance(command[1]);
-					System.out.println("PRIMEIRO: " + c);
-				}*/
-				
 
 				Object[] result = null;
 				
 				if(command.length >= 2) {
-//					Constructor<String> c = (Constructor<String>)previous.get(previous.size()-1);
-	//				System.out.println(c.newInstance(command[1]));
-					
-					Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0], Object[].class);
-					System.out.println(m);
-					System.out.println(previous.get(previous.size() - 1));
+					Method[] ms = previous.get(previous.size() - 1).getClass().getMethods();
+					//Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0], Object[].class);
+					/*System.out.println(previous.get(previous.size() - 1));
 					Object[] a = new Object[] {command[1]};
 					Object o2 = m.invoke(previous.get(previous.size() - 1), (Object)a);			
+					*/
 					
-					/*Method[] ms = previous.get(previous.size() - 1).getClass().getMethods();
-					
+					Method method;
+					String[] methodName;
+					String className = previous.get(previous.size() - 1).getClass().toString();
+					System.out.println("Class: " + className);
 					for(int i = 0; i < ms.length; i++) {
-						System.out.println("method[" + i + "] = " + ms[i]);
-					}*/
+						method = ms[i];
+						methodName = (String[])ms[i].toString().split(" ");
+						Class<?>[] param = method.getParameterTypes();
+						for(int j = 0; j < methodName.length; j++) {
+							// Is method of name command[0]
+							if(methodName[j].contains(command[0])) {
+								System.out.println("	" + methodName[j]);
+								// Are provided parameters equal to expected parameters of list?
+								if(param.length == command.length - 1) {
+									System.out.println("Method " + method + " correct");
+									
+									Object o2 = method.invoke(previous.get(previous.size() - 1), (Object)new Object[] {command[1]}); 
+											//command[1].getClass().cast(param[0].getClass())); 
+									System.out.println("RESULT: " + o2);
+									break;
+								}
+								
+							}
+						}
+						
+						
+					}
 					
 					//System.out.println("AKIII: " + result);
 					//result = (Object[])invoke(previous.get(previous.size() - 1), command[0], command[1]);
 					
-					previous.clear();
+					/*previous.clear();
 					previous.add(o2);
 					System.out.println(o2);
-					
+					*/
 				}
 				else {
 					Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0]);
@@ -197,14 +209,6 @@ public class InstrospectionShell {
 						System.out.println(result[i]);
 					}
 				}
-				
-				
-				
-				
-				
-				
-				
-				
 				
 			}
 		} catch(Exception e) {
