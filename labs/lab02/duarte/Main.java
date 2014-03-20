@@ -1,4 +1,3 @@
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -84,7 +83,7 @@ public class Main {
 		m = concreteClass.getMethod(command[0]);
 		System.out.println(m.toString());
 		Object[] args = new Object[] { command[1] };
-		result = (Object[])m.invoke(list.get(list.size() - 1), args);
+		result = (Object[])m.invoke(list.get(list.size() - 1), (Object)args);
 
 	    } else {
 
