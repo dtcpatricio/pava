@@ -22,24 +22,24 @@ public class Inspector {
 	boolean flagCommand = false;
 
 	public void inspect(Object object) {
+		getInformation(object);
+		read_eval_loop();
+	}
+	
+	/* Retrieve information about Object object */
+	public void getInformation(Object object) {
 		System.out.println(object.toString() + " is an instance of " + object.getClass());
 		System.out.println("----------");
 		getFields(object);
+		getMethods(object);
 		
-		Method[] methods = object.getClass().getDeclaredMethods();
-		for (Method method : methods) {
-			System.out.println();
-		}
-		
-		read_eval_loop();
 	}
 	
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
 		while(true) {
-			System.out.println("Insert Command: ");
+			System.out.println(" > ");
 			String[] command = readLine().split(" ");
-			System.out.println("AKI");
 			//command(command);
 		}
 	}
@@ -49,11 +49,17 @@ public class Inspector {
 		variables = new HashMap<String, Object>();
 	}
 	
-	public void getMethods(Class<?> cls) {
-		Method[] methods = cls.getDeclaredMethods();
-		for (Method method : methods) {
-			System.out.println(method);
+	public void getMethods(Object object) {
+		Class<?> objectClass = object.getClass();
+		Method[] methods;
+		do {
+			methods = objectClass.getDeclaredMethods();
+			for (Method method : methods) {
+				System.out.println(method);
+			}
+			objectClass = objectClass.getSuperclass();
 		}
+		while(!objectClass.equals(Object.class));
 	}
 	
 	public void getSuperClasses(Object object) {
@@ -67,13 +73,33 @@ public class Inspector {
 			}
 		}
 	}
+	
+	/* Duvida: os fields private e protected de superclasses devem ser impressos? 
+	 * E os static imprimem-se?*/
 	public void getFields(Object object) {
-		//getSuperClasses(object);
-		Field[] fields = object.getClass().getFields();
-		for (Field field : fields) {
-			System.out.println(field);
+		Class<?> objectClass = object.getClass();
+		Field[] fields;
+		do {
+			fields = objectClass.getDeclaredFields();
+			for (Field field : fields) {
+				field.setAccessible(true);
+				try {
+					field.get(object);
+					// Falta imprimir os modifiers
+					System.out.println(field.getType()+ " " + field.getName() + " = " + field.get(object));
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			objectClass = objectClass.getSuperclass();
 		}
+		while(!objectClass.equals(Object.class));
 	}
+	
 	public String readLine() {
 		Scanner in = new Scanner(System.in);
 		return in.nextLine();
@@ -119,7 +145,7 @@ public class Inspector {
 		commandSet(command);
 		commandGet(command);
 		commandIndex(command);
-		commandUnknown(command);
+		commandC(command);
 
 		flagCommand = false;
 	}
@@ -193,50 +219,62 @@ public class Inspector {
 		}
 	}
 
-	public void commandUnknown(String[] command) {
+	/* Command c name value0 value1 ... valuen */
+	public void commandC(String[] command) {
 		try {
-			if(!flagCommand) {
-				System.out.println("Trying generic command: " + command[0]);
+			Object o = null;
 
-				Object o = null;
+			Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0]);
+			Object result = m.invoke(previous.get(previous.size() - 1));
+
+			previous.clear();
+
+			if(result.getClass().isArray()) {
+				Object[] resultArray = (Object[])result;
+				for(int i = 0; i < resultArray.length; i++) {
+					previous.add(resultArray[i]);
+					System.out.println(resultArray[i]);
+				}
+			}
+			else {
+				previous.add(result);
+				System.out.println(result);
+			}
 
 
+			if(command.length >= 2) {
+				Method[] ms = previous.get(previous.size() - 1).getClass().getMethods();
+				//Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0], Object[].class);
+				/*System.out.println(previous.get(previous.size() - 1));
+				Object[] a = new Object[] {command[1]};
+				Object o2 = m.invoke(previous.get(previous.size() - 1), (Object)a);			
+				*/
 
-				if(command.length >= 2) {
-					Method[] ms = previous.get(previous.size() - 1).getClass().getMethods();
-					//Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0], Object[].class);
-					/*System.out.println(previous.get(previous.size() - 1));
-					Object[] a = new Object[] {command[1]};
-					Object o2 = m.invoke(previous.get(previous.size() - 1), (Object)a);			
-					*/
-
-					Method method;
-					String[] methodName;
-					String className = previous.get(previous.size() - 1).getClass().toString();
-					System.out.println("Class: " + className);
-					for(int i = 0; i < ms.length; i++) {
-						method = ms[i];
-						methodName = (String[])ms[i].toString().split(" ");
-						Class<?>[] param = method.getParameterTypes();
-						for(int j = 0; j < methodName.length; j++) {
-							// Is method of name command[0]
-							if(methodName[j].contains(command[0])) {
-								System.out.println("	" + methodName[j]);
-								// Are provided parameters equal to expected parameters of list?
-								if(param.length == command.length - 1) {
-									System.out.println("Method " + method + " correct");
-
+				Method method;
+				String[] methodName;
+				String className = previous.get(previous.size() - 1).getClass().toString();
+				System.out.println("Class: " + className);
+				for(int i = 0; i < ms.length; i++) {
+					method = ms[i];
+					methodName = (String[])ms[i].toString().split(" ");
+					Class<?>[] param = method.getParameterTypes();
+					for(int j = 0; j < methodName.length; j++) {
+						// Is method of name command[0]
+						if(methodName[j].contains(command[0])) {
+							System.out.println("	" + methodName[j]);
+							// Are provided parameters equal to expected parameters of list?
+							if(param.length == command.length - 1) {
+								System.out.println("Method " + method + " correct");
 									Object o2 = method.invoke(previous.get(previous.size() - 1), (Object)new Object[] {command[1]}); 
-											//command[1].getClass().cast(param[0].getClass())); 
-									System.out.println("RESULT: " + o2);
-									break;
-								}
-
+										//command[1].getClass().cast(param[0].getClass())); 
+								System.out.println("RESULT: " + o2);
+								break;
 							}
 						}
-
-
 					}
+
+
+				}
 
 					//System.out.println("AKIII: " + result);
 					//result = (Object[])invoke(previous.get(previous.size() - 1), command[0], command[1]);
@@ -247,26 +285,9 @@ public class Inspector {
 					*/
 				}
 				else {
-					Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0]);
-					Object result = m.invoke(previous.get(previous.size() - 1));
-
-					previous.clear();
-
-					if(result.getClass().isArray()) {
-						Object[] resultArray = (Object[])result;
-						for(int i = 0; i < resultArray.length; i++) {
-							previous.add(resultArray[i]);
-							System.out.println(resultArray[i]);
-						}
-					}
-					else {
-						previous.add(result);
-						System.out.println(result);
-					}
+					
 
 				}
-
-			}
 		} catch(Exception e) {
 			System.err.println("commandUnknown: " + e.toString());
 			e.printStackTrace();
