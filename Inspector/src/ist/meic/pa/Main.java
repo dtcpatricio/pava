@@ -8,8 +8,6 @@ public class Main {
 		a.E teste = new a.E(); 
 		
 		is.inspect(teste);
-
-
 	}
 
 }

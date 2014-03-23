@@ -29,7 +29,19 @@ public class Inspector {
 		Method[] methods = object.getClass().getDeclaredMethods();
 		for (Method method : methods) {
 			System.out.println();
-		}		
+		}
+		
+		read_eval_loop();
+	}
+	
+	/* reads ands evaluate commands provided by the user */
+	public void read_eval_loop() {
+		while(true) {
+			System.out.println("Insert Command: ");
+			String[] command = readLine().split(" ");
+			System.out.println("AKI");
+			//command(command);
+		}
 	}
 	
 	public Inspector() {
@@ -56,7 +68,7 @@ public class Inspector {
 		}
 	}
 	public void getFields(Object object) {
-		getSuperClasses();
+		//getSuperClasses(object);
 		Field[] fields = object.getClass().getFields();
 		for (Field field : fields) {
 			System.out.println(field);
