@@ -1,9 +1,5 @@
 package ist.meic.pa;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +16,12 @@ public class Inspector {
 	Map<String, Object> variables;
 
 	boolean flagCommand = false;
-
+	
+	public Inspector() {
+		previous = new ArrayList<Object>();
+		variables = new HashMap<String, Object>();
+	}
+	
 	public void inspect(Object object) {
 		getInformation(object);
 		read_eval_loop();
@@ -40,13 +41,9 @@ public class Inspector {
 		while(true) {
 			System.out.println(" > ");
 			String[] command = readLine().split(" ");
-			//command(command);
+			System.out.println("Inserted Command: " + command[0]);
+			command(command);
 		}
-	}
-	
-	public Inspector() {
-		previous = new ArrayList<Object>();
-		variables = new HashMap<String, Object>();
 	}
 	
 	public void getMethods(Object object) {
@@ -84,10 +81,10 @@ public class Inspector {
 			for (Field field : fields) {
 				field.setAccessible(true);
 				try {
-					field.get(object);
+					//field.get(object);
 					// Falta imprimir os modifiers
 					System.out.println(field.getType()+ " " + field.getName() + " = " + field.get(object));
-				} catch (IllegalArgumentException e) {
+				} catch (IllegalArgumentException e) { 
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
@@ -141,15 +138,33 @@ public class Inspector {
 	}
 
 	public void command(String[] command) {
-		commandClass(command);
-		commandSet(command);
-		commandGet(command);
-		commandIndex(command);
-		commandC(command);
-
+		System.out.println("Im in command");
+		System.out.println(flagCommand);
+		//commandClass(command);
+		//commandSet(command);
+		//commandGet(command);
+		//commandIndex(command);
+		//commandC(command);
+		commandI(command);
+		commandQ(command);
+		if(flagCommand == false) {
+			System.out.println("Error: Unknown command : the term '" + command[0] +
+					"' is not recognized as the name of a command, please try again!\n" +
+					"Type -help for more information");
+		}
 		flagCommand = false;
 	}
+	
+	public void commandI(String[] command) {
+		
+	}
 
+	public void commandQ(String[] command) {
+		if(command[0].equals("q")) {
+			System.out.println("Program exited");
+			System.exit(0);
+		}
+	}
 	public void commandClass(String[] command) {
 		try {
 			if(command[0].toLowerCase().equals("class") && !flagCommand) {
