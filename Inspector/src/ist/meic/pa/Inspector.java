@@ -13,9 +13,12 @@ public class Inspector {
 
 	Class<?> previous_class = null;
 	/* Contains names of objects as key and objects as value */
+	
 	Map<String, Object> variables;
 
 	boolean flagCommand = false;
+	
+	Object current_object = null;
 	
 	public Inspector() {
 		previous = new ArrayList<Object>();
@@ -24,6 +27,7 @@ public class Inspector {
 	
 	public void inspect(Object object) {
 		getInformation(object);
+		current_object = object;
 		read_eval_loop();
 	}
 	
@@ -33,7 +37,6 @@ public class Inspector {
 		System.out.println("----------");
 		getFields(object);
 		getMethods(object);
-		
 	}
 	
 	/* reads ands evaluate commands provided by the user */
@@ -41,7 +44,6 @@ public class Inspector {
 		while(true) {
 			System.out.println(" > ");
 			String[] command = readLine().split(" ");
-			System.out.println("Inserted Command: " + command[0]);
 			command(command);
 		}
 	}
@@ -138,8 +140,6 @@ public class Inspector {
 	}
 
 	public void command(String[] command) {
-		System.out.println("Im in command");
-		System.out.println(flagCommand);
 		//commandClass(command);
 		//commandSet(command);
 		//commandGet(command);
@@ -156,7 +156,34 @@ public class Inspector {
 	}
 	
 	public void commandI(String[] command) {
-		
+		if(command[0].equals("i")) {
+			Field[] fields;
+			Class<?> objectClass = current_object.getClass();
+			while(!objectClass.equals(Object.class)) {
+				System.out.println("Class Name : " + objectClass.getName());
+				fields = objectClass.getDeclaredFields();
+				for(Field f : fields) {
+					f.setAccessible(true);
+					//System.out.println("FIELD: " + f.getName());
+					if(command[1].equals(f.getName())) {
+						try {
+							Object newObj = f.get(current_object).getClass();
+							System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
+							System.out.println("Current Object: " + newObj);
+							flagCommand = true;
+							current_object = newObj;
+							return;
+						} catch (IllegalArgumentException e) {
+							e.printStackTrace();
+						} catch (IllegalAccessException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				objectClass = objectClass.getSuperclass();
+			}
+			flagCommand = true;
+		}
 	}
 
 	public void commandQ(String[] command) {

@@ -8,6 +8,8 @@ public class Main {
 		a.E teste = new a.E(); 
 		
 		is.inspect(teste);
+		/* Sera que o comando q permitir a classe continuar a execucao? */
+		System.out.println("AFTER EXECUTION OF INSPECT");
 	}
 
 }
