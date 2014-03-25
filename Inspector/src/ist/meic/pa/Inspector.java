@@ -135,19 +135,15 @@ public class Inspector {
 	}
 
 	public void command(String[] command) {
-		//commandClass(command);
-		//commandSet(command);
-		//commandGet(command);
-		//commandIndex(command);
 		commandC(command);
-		commandI(command);
+		/*commandI(command);
 		commandQ(command);
 		if(flagCommand == false) {
 			System.out.println("Error: Unknown command : the term '" + command[0] +
 					"' is not recognized as the name of a command, please try again!\n" +
 					"Type -help for more information");
 		}
-		flagCommand = false;
+		flagCommand = false;*/
 	}
 	
 	public void commandI(String[] command) {
@@ -202,7 +198,7 @@ public class Inspector {
 	/* Obtain all methods of previous object looking first for the class's methods
 	 * and next to the superclass methods and so on */
 	public void commandC(String[] command) {
-		if(!command[0].toLowerCase().equals("class"))
+		if(!command[0].toLowerCase().equals("c"))
 			return;
 		
 		Class<?> objectClass = current_object.getClass();
@@ -224,8 +220,29 @@ public class Inspector {
 		}
 		while(!objectClass.equals(Object.class) && result == null);
 
-		System.out.println("RESULT: " + result);
-		
+		if(result == null) {
+			System.out.println("Metodo nao reconhecido, introduza novamente");
+		}
+		else {
+			returnResult(result);
+			
+		}
+	}
+	
+	/* print result value */
+	/* checks if result is an array */
+	/* cast (Object[])result nao possivel
+	 * NAO FUNCIONA PARA ARRAYS */
+	public void returnResult(Object result) {
+		if(result.getClass().isArray()) {
+			Object[] resultArray = (Object[])result;
+			for(int i = 0; i < resultArray.length; i++) {
+				System.out.println(resultArray[i]);
+			}
+		}
+		else {
+			System.out.println("RESULT: " + result);
+		}
 	}
 	
 	/* Receives list of methods */
@@ -260,16 +277,16 @@ public class Inspector {
 					
 				} catch (IllegalArgumentException e) {
 					// TODO Auto-generated catch block
-					//e.printStackTrace();
-					//System.out.println("IllegalArgumentException");
+					e.printStackTrace();
+					System.out.println("IllegalArgumentException");
 				} catch (IllegalAccessException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-					//System.out.println("IllegalAccessException");
+					//e.printStackTrace();
+					System.out.println("IllegalAccessException");
 				} catch (InvocationTargetException e) {
 					// TODO Auto-generated catch block
 					//e.printStackTrace();
-					//System.out.println("InvocationTargetException");
+					System.out.println("InvocationTargetException");
 				}
 			}
 		}
@@ -282,30 +299,10 @@ public class Inspector {
 	
 	/* returns list that contains all methods with paramNumber as number of parameters */
 	/* Primitive types: boolean(0), byte(1), short(2), int(3), long(4), char(5), float(6) and double(7)
-	 * Reference types: java.lang.String(8), java.io.Serializable, java.lang.Integer, all others
+	 * Reference types: java.lang.String(8), java.io.Serializable, java.lang.Integer, ARRAYS, all others
 	 * Types are represented as ints CRIAR MACROS NO INICIO DO FICHEIRO, unknown (-1)
 	 * LIMPAR EXCEPCOES
 	 */	
-	public Object methodMatchParamType(Method method, Class<?>[] params, List<String> parameters) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Object result = null;
-		Object[] args = parameters.toArray();
-		for(int param = 0; param < params.length; param++) {
-			if(params[param].equals(String.class) && 
-					   parameters.get(param).startsWith("\"") &&
-					   parameters.get(param).endsWith("\"")) {
-				
-						args[param] = (String)parameters.get(param).replace("\"", "");;
-			}
-			if(params[param].equals(int.class)) {
-				args[param] = Integer.parseInt(parameters.get(param));
-			}
-		}
-		method.setAccessible(true);
-		result = method.invoke(current_object, args);
-		
-		return result;
-	}
-
 	/* Returns a list containing each type of each parameter
 	 * Analyzes parameters provided by the user:
 	 *  - if begins and ends with "" is considered a string, example: "5", "true"
@@ -317,18 +314,129 @@ public class Inspector {
 	 *  - ending in D or d, is considered a double, but could be accepted as int, or float
 	 *  	example: 10d
 	 */	
-	public int analyzeParameterType(String parameter) {
-		if(isString(parameter)) {
-			return 8;
+	// ORGANIZAR ESTE CODIGO
+	public Object methodMatchParamType(Method method, Class<?>[] params, List<String> parameters) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Object result = null;
+		Object[] args = parameters.toArray();
+		for(int param = 0; param < params.length; param++) {
+			// Type String
+			if(isString(params[param], parameters.get(param))) {
+				args[param] = (String)parameters.get(param).replace("\"", "");;
+			}
+			// Type char - nao funciona para por exemplo: \'\\u001\'...Solucao?
+			if(isChar(params[param], parameters.get(param))) {
+				args[param] = parameters.get(param).replace("\'", "").charAt(0);
+			}
+			// Type int
+			if(isInt(params[param])) {
+				args[param] = Integer.parseInt(parameters.get(param));
+			}
+			// Type boolean
+			if(isBoolean(params[param], parameters.get(param))) {
+				args[param] = isBooleanTrue(parameters.get(param));
+			}
+			// Type long
+			if(isLong(params[param], parameters.get(param))) {
+				args[param] = (long)Long.valueOf(parameters.get(param).toLowerCase().replace("l", "")).longValue();
+			}
+			// Type float
+			if(isFloat(params[param], parameters.get(param))) {
+				args[param] = Float.valueOf(parameters.get(param).toLowerCase().replace("f", "")).floatValue();
+			}
+			// Type double
+			if(isDouble(params[param], parameters.get(param))) {
+				args[param] = Double.valueOf(parameters.get(param).toLowerCase().replace("d", "")).doubleValue();
+			}
+			// Type byte
+			if(isByte(params[param])) {
+				args[param] = Byte.valueOf(parameters.get(param));
+			}
+			// Type short
+			if(isShort(params[param])) {
+				args[param] = Short.parseShort(parameters.get(param));
+			}
 		}
-		return -1; // unknown
+		method.setAccessible(true);
+		result = method.invoke(current_object, args);
+		
+		return result;
 	}
 	
-	/** Checks if parameter starts and ends with quotation marks */
-	public boolean isString(String parameter) {
-		if(parameter.startsWith("\"") && parameter.endsWith("\"")) {
+	/** Checks if paramType is of class String and if starts and ends with quotation marks */
+	public boolean isString(Class<?> paramType, String parameter) {
+		if(paramType.equals(String.class) && 
+		   parameter.startsWith("\"") && 
+		   parameter.endsWith("\"")) {
 			return true;
 		}
+		return false;
+	}
+	
+	/** Checks if paramType is of class char and if starts and ends with ' */
+	public boolean isChar(Class<?> paramType, String parameter) {
+		if(paramType.equals(char.class) && 
+		   parameter.startsWith("\'") && 
+		   parameter.endsWith("\'")) {
+			return true;
+		}
+		return false;
+	}
+	
+	/* Returns true if paramType is of class int */
+	public boolean isInt(Class<?> paramType) {
+		if(paramType.equals(int.class))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of class boolean and parameter is true or false */
+	public boolean isBoolean(Class<?> paramType, String parameter) {
+		if(paramType.equals(boolean.class) && 
+		  (parameter.toLowerCase().equals("true") 
+		   || parameter.toLowerCase().equals("false")))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if has value true, false otherwise */
+	public boolean isBooleanTrue(String parameter) {
+		if(parameter.toLowerCase().equals("true"))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of type long and if parameter ends with l or L */
+	public boolean isLong(Class<?> paramType, String parameter) {
+		if(paramType.equals(long.class) || parameter.toLowerCase().endsWith("l"))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of type long and if parameter ends with l or L */
+	public boolean isFloat(Class<?> paramType, String parameter) {
+		if(paramType.equals(float.class) || parameter.toLowerCase().endsWith("f"))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of type long and if parameter ends with l or L */
+	public boolean isDouble(Class<?> paramType, String parameter) {
+		if(paramType.equals(double.class) || parameter.toLowerCase().endsWith("d"))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of class int */
+	public boolean isByte(Class<?> paramType) {
+		if(paramType.equals(byte.class))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of class int */
+	public boolean isShort(Class<?> paramType) {
+		if(paramType.equals(short.class))
+			return true;
 		return false;
 	}
 	
