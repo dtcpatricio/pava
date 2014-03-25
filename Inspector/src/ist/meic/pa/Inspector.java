@@ -7,13 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class Inspector {
-	/* Contains object of previous command */
-	List<Object> previous;
-
-	Class<?> previous_class = null;
-	/* Contains names of objects as key and objects as value */
-	
+public class Inspector {	
 	Map<String, Object> variables;
 
 	boolean flagCommand = false;
