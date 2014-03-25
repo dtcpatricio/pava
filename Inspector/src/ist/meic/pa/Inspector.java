@@ -188,12 +188,21 @@ public class Inspector {
 			if(f.getName().equals(fieldName))
 				break;
 			
-			if(!iter.hasNext())
+			if(!iter.hasNext()) {
 				System.err.println("No such field exists on the object");
+				return;
+			}
 		}
 		
+		// salvaguardar de campos private ou protected
+		f.setAccessible(true);		
+		Type fieldType = f.getGenericType();
+		
+		if(fieldType.toString().equals("boolean"))
+			System.out.println("yeah"); // placeholder
+		
 		try {
-			f.setAccessible(true);
+			
 			f.set(obj, Integer.parseInt(newValue));
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
