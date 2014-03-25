@@ -8,47 +8,47 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class Inspector {	
-	Map<String, Object> variables;
+	/* Contains object beign evaluated */
+	Object current_object = null;
 
 	boolean flagCommand = false;
 	
-	Object current_object = null;
-	
-	public Inspector() {
-		previous = new ArrayList<Object>();
-		variables = new HashMap<String, Object>();
-	}
-	
 	public void inspect(Object object) {
-		getInformation(object);
 		current_object = object;
+		getInformation(object);
 		read_eval_loop();
 	}
 	
 	/* Retrieve information about Object object */
 	public void getInformation(Object object) {
 		System.out.println(object.toString() + " is an instance of " + object.getClass());
-		System.out.println("----------");
 		getFields(object);
 		getMethods(object);
+		getSuperClasses(object);
+		
 	}
 	
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
 		while(true) {
-			System.out.println(" > ");
+			System.out.print(" > ");
 			String[] command = readLine().split(" ");
 			command(command);
 		}
 	}
 	
+	public Inspector() {
+	}
+	
 	public void getMethods(Object object) {
+		System.out.println("----------");
+		System.out.println("Methods");
 		Class<?> objectClass = object.getClass();
-		Method[] methods;
+		Method[] ms;
 		do {
-			methods = objectClass.getDeclaredMethods();
-			for (Method method : methods) {
-				System.out.println(method);
+			ms = objectClass.getDeclaredMethods();
+			for (Method method : ms) {
+				System.out.println("\t" + method);
 			}
 			objectClass = objectClass.getSuperclass();
 		}
@@ -56,20 +56,21 @@ public class Inspector {
 	}
 	
 	public void getSuperClasses(Object object) {
-		boolean superclass = true;
-		while(superclass) {
-			if(!object.getClass().getSuperclass().equals(Object.class)) {
-				getMethods(object.getClass().getSuperclass());
-			}
-			else {
-				superclass = false;
-			}
+		System.out.println("----------");
+		System.out.println("Superclasses:");
+		Class<?> objectClass = object.getClass().getSuperclass();
+		do {
+			System.out.println("\t" + objectClass);
+			objectClass = objectClass.getSuperclass();
 		}
+		while(!objectClass.equals(Object.class));
 	}
 	
 	/* Duvida: os fields private e protected de superclasses devem ser impressos? 
 	 * E os static imprimem-se?*/
 	public void getFields(Object object) {
+		System.out.println("----------");
+		System.out.println("Fields:");
 		Class<?> objectClass = object.getClass();
 		Field[] fields;
 		do {
@@ -77,10 +78,10 @@ public class Inspector {
 			for (Field field : fields) {
 				field.setAccessible(true);
 				try {
-					//field.get(object);
+					field.get(object);
 					// Falta imprimir os modifiers
-					System.out.println(field.getType()+ " " + field.getName() + " = " + field.get(object));
-				} catch (IllegalArgumentException e) { 
+					System.out.println("\t" + field.getType()+ " " + field.getName() + " = " + field.get(object));
+				} catch (IllegalArgumentException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
@@ -138,7 +139,7 @@ public class Inspector {
 		//commandSet(command);
 		//commandGet(command);
 		//commandIndex(command);
-		//commandC(command);
+		commandC(command);
 		commandI(command);
 		commandQ(command);
 		if(flagCommand == false) {
@@ -186,157 +187,155 @@ public class Inspector {
 			System.exit(0);
 		}
 	}
-	public void commandClass(String[] command) {
-		try {
-			if(command[0].toLowerCase().equals("class") && !flagCommand) {
-				Class<?> result = getClass(command[1]);
-
-				Object o = null;
-
-				/* input as parameters? */
-				if(command.length >= 3) {
-					if(command[1].equals("java.lang.Integer")) {
-						Constructor<Integer> c = Integer.class.getConstructor(int.class);
-						o = c.newInstance(Integer.parseInt(command[2]));
-					}
-					if(command[1].equals("java.lang.String")) {
-						Constructor<String> c = String.class.getConstructor(String.class);
-						o = c.newInstance(command[2]);
-					}
-				}
-				else {
-					o = result;
-				}
-
-				System.out.println(result);
-				previous.clear();
-				previous.add(o);
-				previous_class = result;
-				flagCommand = true;
-			}
-		} catch(Exception e) {
-			System.err.println("commandClass " + e.getMessage());
+	/* Returns list (in string format) of all parameters of the method */
+	public List<String> getParameters(String[] command) {
+		List<String> parameters = new ArrayList<String>();
+		
+		/* parameters start in position number 2 */
+		for(int cmd = 2; cmd < command.length; cmd++) {
+			parameters.add(command[cmd]);
 		}
+		return parameters;
 	}
-
-	public void commandSet(String[] command) {
-		if(command[0].toLowerCase().equals("set") && !flagCommand) {
-			System.out.println("Saved name for object of type: " + previous.get(previous.size() - 1).getClass());
-			System.out.println(previous.get(previous.size() - 1));
-			Object p =  previous.get(previous.size() - 1);
-			variables.put(command[1], p);
-			previous.clear();
-			previous.add(p);
-			flagCommand = true;
-		}
-	}
-
-	public void commandGet(String[] command) {
-		if(command[0].toLowerCase().equals("get") && !flagCommand) {
-			System.out.println(variables.get(command[1]));
-			previous.clear();
-			previous.add(variables.get(command[1]));
-			flagCommand = true;
-		}
-	}
-
-	public void commandIndex(String[] command) {
-		if(command[0].toLowerCase().equals("index") && !flagCommand) {
-			if(previous.size() > Integer.parseInt(command[1])) {
-				Object o = previous.get(Integer.parseInt(command[1]));
-				System.out.println(o);
-				previous.clear();
-				previous.add(o);
-			}
-			else {
-				System.err.println("Index out of bound");
-			}
-			flagCommand = true;
-		}
-	}
-
+	
 	/* Command c name value0 value1 ... valuen */
+	/* Obtain all methods of previous object looking first for the class's methods
+	 * and next to the superclass methods and so on */
 	public void commandC(String[] command) {
-		try {
-			Object o = null;
-
-			Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0]);
-			Object result = m.invoke(previous.get(previous.size() - 1));
-
-			previous.clear();
-
-			if(result.getClass().isArray()) {
-				Object[] resultArray = (Object[])result;
-				for(int i = 0; i < resultArray.length; i++) {
-					previous.add(resultArray[i]);
-					System.out.println(resultArray[i]);
-				}
+		if(!command[0].toLowerCase().equals("class"))
+			return;
+		
+		Class<?> objectClass = current_object.getClass();
+		Method[] declaredMethods = null;
+		List<Method> methods = new ArrayList<Method>();
+		List<String> parameters = getParameters(command);
+		Object result = null;
+		
+		do {
+			declaredMethods = objectClass.getDeclaredMethods();
+			methods.clear();
+			for (Method method : declaredMethods) {
+				methods.add(method);
 			}
-			else {
-				previous.add(result);
-				System.out.println(result);
-			}
-
-
-			if(command.length >= 2) {
-				Method[] ms = previous.get(previous.size() - 1).getClass().getMethods();
-				//Method m = previous.get(previous.size() - 1).getClass().getMethod(command[0], Object[].class);
-				/*System.out.println(previous.get(previous.size() - 1));
-				Object[] a = new Object[] {command[1]};
-				Object o2 = m.invoke(previous.get(previous.size() - 1), (Object)a);			
-				*/
-
-				Method method;
-				String[] methodName;
-				String className = previous.get(previous.size() - 1).getClass().toString();
-				System.out.println("Class: " + className);
-				for(int i = 0; i < ms.length; i++) {
-					method = ms[i];
-					methodName = (String[])ms[i].toString().split(" ");
-					Class<?>[] param = method.getParameterTypes();
-					for(int j = 0; j < methodName.length; j++) {
-						// Is method of name command[0]
-						if(methodName[j].contains(command[0])) {
-							System.out.println("	" + methodName[j]);
-							// Are provided parameters equal to expected parameters of list?
-							if(param.length == command.length - 1) {
-								System.out.println("Method " + method + " correct");
-									Object o2 = method.invoke(previous.get(previous.size() - 1), (Object)new Object[] {command[1]}); 
-										//command[1].getClass().cast(param[0].getClass())); 
-								System.out.println("RESULT: " + o2);
-								break;
-							}
-						}
-					}
-
-
-				}
-
-					//System.out.println("AKIII: " + result);
-					//result = (Object[])invoke(previous.get(previous.size() - 1), command[0], command[1]);
-
-					/*previous.clear();
-					previous.add(o2);
-					System.out.println(o2);
-					*/
-				}
-				else {
-					
-
-				}
-		} catch(Exception e) {
-			System.err.println("commandUnknown: " + e.toString());
-			e.printStackTrace();
+			methods = evaluateMethodsName(methods, command[1]);	
+			result = evaluateMethodsParam(methods, parameters.size(), parameters);
+			
+			objectClass = objectClass.getSuperclass();
 		}
+		while(!objectClass.equals(Object.class) && result == null);
 
+		System.out.println("RESULT: " + result);
+		
+	}
+	
+	/* Receives list of methods */
+	/* Obtain list with all methods with same name as methodName */
+	public List<Method> evaluateMethodsName(List<Method> methods, String methodName) {
+		List<Method> bestMethods = new ArrayList<Method>();
+		
+		for(Method method : methods) {
+			if(method.getName().equals(methodName)) {
+				bestMethods.add(method);
+			}
+		}
+		return bestMethods;
 	}
 
-	public void execute() {
-		System.out.println("Insert Command: ");
-
-		String[] command = readLine().split(" ");
-
-		command(command);
-
+	/* Return list with methods that have the same number of parameters as the input */
+	/* paramNumber number of parameters provided by the user */
+	/* parameters: list of parameters provided by the user */
+	public Object evaluateMethodsParam(List<Method> methods, int paramNumber, List<String> parameters) {
+		List<Method> bestMethods = new ArrayList<Method>();
+		Class<?>[] param = null;
+		Object result = null;
+		for(Method method : methods) {
+			param = method.getParameterTypes();
+			if(param.length == paramNumber) {
+				bestMethods.add(method);
+				try {
+					result = methodMatchParamType(method, param, parameters);
+					if(result != null) {
+						return result;
+					}
+					
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					//e.printStackTrace();
+					//System.out.println("IllegalArgumentException");
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					//System.out.println("IllegalAccessException");
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					//e.printStackTrace();
+					//System.out.println("InvocationTargetException");
+				}
+			}
+		}
+		
+		return null;
 	}
+	
+	
+	
+	
+	/* returns list that contains all methods with paramNumber as number of parameters */
+	/* Primitive types: boolean(0), byte(1), short(2), int(3), long(4), char(5), float(6) and double(7)
+	 * Reference types: java.lang.String(8), java.io.Serializable, java.lang.Integer, all others
+	 * Types are represented as ints CRIAR MACROS NO INICIO DO FICHEIRO, unknown (-1)
+	 * LIMPAR EXCEPCOES
+	 */	
+	public Object methodMatchParamType(Method method, Class<?>[] params, List<String> parameters) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Object result = null;
+		Object[] args = parameters.toArray();
+		for(int param = 0; param < params.length; param++) {
+			if(params[param].equals(String.class) && 
+					   parameters.get(param).startsWith("\"") &&
+					   parameters.get(param).endsWith("\"")) {
+				
+						args[param] = (String)parameters.get(param).replace("\"", "");;
+			}
+			if(params[param].equals(int.class)) {
+				args[param] = Integer.parseInt(parameters.get(param));
+			}
+		}
+		method.setAccessible(true);
+		result = method.invoke(current_object, args);
+		
+		return result;
+	}
+
+	/* Returns a list containing each type of each parameter
+	 * Analyzes parameters provided by the user:
+	 *  - if begins and ends with "" is considered a string, example: "5", "true"
+	 *  - true or false are considered booleans
+	 *  - ending in L or l, is considered a long, but could be accepted as int, or double, or float,
+	 *  	example: 10L
+	 *  - ending in F or f, is considered a float, but could be accepted as int, or double or float,
+	 *  	example: 10f
+	 *  - ending in D or d, is considered a double, but could be accepted as int, or float
+	 *  	example: 10d
+	 */	
+	public int analyzeParameterType(String parameter) {
+		if(isString(parameter)) {
+			return 8;
+		}
+		return -1; // unknown
+	}
+	
+	/** Checks if parameter starts and ends with quotation marks */
+	public boolean isString(String parameter) {
+		if(parameter.startsWith("\"") && parameter.endsWith("\"")) {
+			return true;
+		}
+		return false;
+	}
+	
+	/* returns true if list methods only contains one method, false otherwise */
+	public boolean isMethodUnique(List<Method> methods) {
+		if(methods.size() == 1)
+			return true;
+		return false;
+	}	
 }
