@@ -1,12 +1,11 @@
 package ist.meic.pa;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.lang.reflect.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -21,6 +20,11 @@ public class Inspector {
 
 	boolean flagCommand = false;
 
+	public Inspector() {
+		previous = new ArrayList<Object>();
+		variables = new HashMap<String, Object>();
+	}
+	
 	public void inspect(Object object) {
 		getInformation(object);
 		read_eval_loop();
@@ -33,21 +37,20 @@ public class Inspector {
 		getFields(object);
 		getMethods(object);
 		
+		previous.add(object);
+		
 	}
 	
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
 		while(true) {
-			System.out.println(" > ");
+			System.out.println("> ");
 			String[] command = readLine().split(" ");
-			//command(command);
+			command(command);
 		}
 	}
 	
-	public Inspector() {
-		previous = new ArrayList<Object>();
-		variables = new HashMap<String, Object>();
-	}
+	
 	
 	public void getMethods(Object object) {
 		Class<?> objectClass = object.getClass();
@@ -141,13 +144,78 @@ public class Inspector {
 	}
 
 	public void command(String[] command) {
+		if(command[0].toLowerCase().equals("m"))
+			commandModify(command);
+		
+		/*
 		commandClass(command);
 		commandSet(command);
 		commandGet(command);
 		commandIndex(command);
-		commandC(command);
+		commandC(command);*/
 
-		flagCommand = false;
+		//flagCommand = false;
+	}
+
+	// Código de função do StackOverflow
+	// @return type mudado de Iterable<Field> para List<Field>
+	// @return List<Field> como LinkedList<Field> pois Arrays.asList retorna fixed-size
+	public static List<Field> getFieldsUpTo(Class<?> startClass, Class<?> exclusiveParent) {
+
+		List<Field> currentClassFields = new LinkedList<Field>(Arrays.asList(startClass
+				.getDeclaredFields()));
+		Class<?> parentClass = startClass.getSuperclass();
+
+		if (parentClass != null && !(parentClass.equals(exclusiveParent))) {
+			List<Field> parentClassFields = (List<Field>)getFieldsUpTo(parentClass, exclusiveParent);
+			currentClassFields.addAll(parentClassFields);
+		}
+
+		return currentClassFields;
+	}
+	
+	private void commandModify(String[] command) {
+		String fieldName = command[1];
+		String newValue = command[2];
+		List<Field> classFields;
+		Field f = null;
+		Object obj = previous.get(previous.size() - 1);
+		Class<?> objClass = obj.getClass();
+		
+		classFields = getFieldsUpTo(objClass, Object.class);
+		for(Iterator<Field> iter = classFields.iterator(); iter.hasNext(); ) {
+			f = iter.next();
+			if(f.getName().equals(fieldName))
+				break;
+			
+			if(!iter.hasNext())
+				System.err.println("No such field exists on the object");
+		}
+		
+		try {
+			f.setAccessible(true);
+			f.set(obj, Integer.parseInt(newValue));
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			System.out.println("Testing new written value: " + f.getName() + " = " + f.get(obj));
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	public void commandClass(String[] command) {
