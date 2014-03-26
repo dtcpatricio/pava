@@ -58,6 +58,7 @@ public class Inspector {
 	}
 	
 	public void getSuperClasses(Object object) {
+	//	if(!object.getClass().isAssignableFrom(Object.class)) return;
 		System.out.println("----------");
 		System.out.println("Superclasses:");
 		Class<?> objectClass = object.getClass().getSuperclass();
@@ -138,7 +139,7 @@ public class Inspector {
 
 	public void command(String[] command) {
 		commandC(command);
-		/*commandI(command);
+		commandI(command);
 		commandQ(command);
 	/*	if(flagCommand == false) {
 			System.out.println("Error: Unknown command : the term '" + command[0] +
@@ -148,11 +149,11 @@ public class Inspector {
 		flagCommand = false;*/
 	}
 	
+	
 	public void commandI(String[] command) {
 		if(!command[0].equals("i")) {
 			return;
 		}
-		
 		Field[] fields;
 		Class<?> objectClass = current_object.getClass();
 		while(!objectClass.equals(Object.class)) {
@@ -165,8 +166,11 @@ public class Inspector {
 						Object newObj = f.get(current_object).getClass();
 						System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
 						System.out.println("Current Object: " + newObj);
-						flagCommand = true;
+						System.out.println(newObj.equals(Object.class));
+						System.out.println("*** " +  newObj.getClass());
+					//	getInformation(newObj); /* AQUI */
 						current_object = newObj;
+						flagCommand = true;
 						return;
 					} catch (IllegalArgumentException e) { 
 						e.printStackTrace();
