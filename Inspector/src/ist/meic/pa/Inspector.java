@@ -13,6 +13,8 @@ public class Inspector {
 
 	boolean flagCommand = false;
 	
+	List<Object> inspected_objects = new ArrayList<Object>();
+	 
 	public void inspect(Object object) {
 		current_object = object;
 		getInformation(object);
@@ -138,7 +140,7 @@ public class Inspector {
 		commandC(command);
 		/*commandI(command);
 		commandQ(command);
-		if(flagCommand == false) {
+	/*	if(flagCommand == false) {
 			System.out.println("Error: Unknown command : the term '" + command[0] +
 					"' is not recognized as the name of a command, please try again!\n" +
 					"Type -help for more information");
@@ -147,34 +149,35 @@ public class Inspector {
 	}
 	
 	public void commandI(String[] command) {
-		if(command[0].equals("i")) {
-			Field[] fields;
-			Class<?> objectClass = current_object.getClass();
-			while(!objectClass.equals(Object.class)) {
-				System.out.println("Class Name : " + objectClass.getName());
-				fields = objectClass.getDeclaredFields();
-				for(Field f : fields) {
-					f.setAccessible(true);
-					//System.out.println("FIELD: " + f.getName());
-					if(command[1].equals(f.getName())) {
-						try {
-							Object newObj = f.get(current_object).getClass();
-							System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
-							System.out.println("Current Object: " + newObj);
-							flagCommand = true;
-							current_object = newObj;
-							return;
-						} catch (IllegalArgumentException e) {
-							e.printStackTrace();
-						} catch (IllegalAccessException e) {
-							e.printStackTrace();
-						}
+		if(!command[0].equals("i")) {
+			return;
+		}
+		
+		Field[] fields;
+		Class<?> objectClass = current_object.getClass();
+		while(!objectClass.equals(Object.class)) {
+			System.out.println("Class Name : " + objectClass.getName());
+			fields = objectClass.getDeclaredFields();
+			for(Field f : fields) {
+				f.setAccessible(true);
+				if(command[1].equals(f.getName())) {
+					try {
+						Object newObj = f.get(current_object).getClass();
+						System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
+						System.out.println("Current Object: " + newObj);
+						flagCommand = true;
+						current_object = newObj;
+						return;
+					} catch (IllegalArgumentException e) { 
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
 					}
 				}
-				objectClass = objectClass.getSuperclass();
 			}
-			flagCommand = true;
+			objectClass = objectClass.getSuperclass();
 		}
+		flagCommand = true;
 	}
 
 	public void commandQ(String[] command) {
@@ -183,6 +186,7 @@ public class Inspector {
 			System.exit(0);
 		}
 	}
+	
 	/* Returns list (in string format) of all parameters of the method */
 	public List<String> getParameters(String[] command) {
 		List<String> parameters = new ArrayList<String>();
@@ -274,7 +278,6 @@ public class Inspector {
 					if(result != null) {
 						return result;
 					}
-					
 				} catch (IllegalArgumentException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -290,7 +293,6 @@ public class Inspector {
 				}
 			}
 		}
-		
 		return null;
 	}
 	
@@ -316,6 +318,7 @@ public class Inspector {
 	 */	
 	// ORGANIZAR ESTE CODIGO
 	public Object methodMatchParamType(Method method, Class<?>[] params, List<String> parameters) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+
 		Object result = null;
 		Object[] args = parameters.toArray();
 		for(int param = 0; param < params.length; param++) {
