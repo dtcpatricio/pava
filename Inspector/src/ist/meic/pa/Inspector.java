@@ -44,7 +44,7 @@ public class Inspector {
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
 		while(true) {
-			System.out.println("> ");
+			System.out.print("> ");
 			String[] command = readLine().split(" ");
 			command(command);
 		}
@@ -197,13 +197,29 @@ public class Inspector {
 		// salvaguardar de campos private ou protected
 		f.setAccessible(true);		
 		Type fieldType = f.getGenericType();
+		Object objValue = null;
+		
+		if(fieldType.toString().equals("int"))
+			objValue = new Integer(newValue);
 		
 		if(fieldType.toString().equals("boolean"))
-			System.out.println("yeah"); // placeholder
+			objValue = new Boolean(newValue);
+		
+		if(fieldType.toString().equals("short"))
+			objValue = new Short(newValue);
+		
+		if(fieldType.toString().equals("byte"))
+			objValue = new Byte(newValue);
+		
+		if(fieldType.toString().equals("float"))
+			objValue = new Float(fieldName);
+		
+		if(fieldType.toString().equals("double"))
+			objValue = new Double(fieldName);
 		
 		try {
 			
-			f.set(obj, Integer.parseInt(newValue));
+			f.set(obj, objValue);
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
