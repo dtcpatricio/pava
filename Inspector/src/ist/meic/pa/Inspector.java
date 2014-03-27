@@ -220,13 +220,13 @@ public class Inspector {
 		}
 		while(!objectClass.equals(Object.class) && result == null);
 
-		if(result == null) {
+		/*if(result == null) {
 			System.out.println("Metodo nao reconhecido, introduza novamente");
 		}
 		else {
 			returnResult(result);
 			
-		}
+		}*/
 	}
 	
 	/* print result value */
@@ -318,49 +318,119 @@ public class Inspector {
 	public Object methodMatchParamType(Method method, Class<?>[] params, List<String> parameters) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		Object result = null;
 		Object[] args = parameters.toArray();
-		for(int param = 0; param < params.length; param++) {
-			// Type String
-			if(isString(params[param], parameters.get(param))) {
-				args[param] = (String)parameters.get(param).replace("\"", "");;
-			}
-			// Type char - nao funciona para por exemplo: \'\\u001\'...Solucao?
-			if(isChar(params[param], parameters.get(param))) {
-				args[param] = parameters.get(param).replace("\'", "").charAt(0);
-			}
-			// Type int
-			if(isInt(params[param])) {
-				args[param] = Integer.parseInt(parameters.get(param));
-			}
-			// Type boolean
-			if(isBoolean(params[param], parameters.get(param))) {
-				args[param] = isBooleanTrue(parameters.get(param));
-			}
-			// Type long
-			if(isLong(params[param], parameters.get(param))) {
-				args[param] = (long)Long.valueOf(parameters.get(param).toLowerCase().replace("l", "")).longValue();
-			}
-			// Type float
-			if(isFloat(params[param], parameters.get(param))) {
-				args[param] = Float.valueOf(parameters.get(param).toLowerCase().replace("f", "")).floatValue();
-			}
-			// Type double
-			if(isDouble(params[param], parameters.get(param))) {
-				args[param] = Double.valueOf(parameters.get(param).toLowerCase().replace("d", "")).doubleValue();
-			}
-			// Type byte
-			if(isByte(params[param])) {
-				args[param] = Byte.valueOf(parameters.get(param));
-			}
-			// Type short
-			if(isShort(params[param])) {
-				args[param] = Short.parseShort(parameters.get(param));
+		/*for(int param = 0; param < params.length; param++) {
+			args[param] = evaluateType(params[param], parameters.get(param));			
+		}*/
+
+		int[] i = new int[] {1,2,3};
+		method.setAccessible(true);
+		args[0] = i;
+		result = method.invoke(current_object, args);
+		System.out.println("RESULT: " + result);
+		
+		/*if(method.getReturnType().isArray()) {
+			
+		}
+		else {
+			result = method.invoke(current_object, args);
+		}*/
+		
+		/*
+		if(result.getClass().isArray()) {
+			Object[] resultArray = (Object[])result;
+			for(int i = 0; i < resultArray.length; i++) {
+				System.out.println(resultArray[i]);
 			}
 		}
-		method.setAccessible(true);
-		result = method.invoke(current_object, args);
+		else {
+			System.out.println("RESULT: " + result);
+		}*/
 		
 		return result;
 	}
+	
+	// Return an object array the first element of the array is either 0 or 1
+	// 0 means the type of the return is not an array, 1 otherwise
+	public Object evaluateType(Class<?> paramType, String parameter) {
+		if(paramType.isPrimitive()) {
+			return evaluatePrimitiveTypes(paramType, parameter);
+		}
+		else {
+			return evaluateReferenceTypes(paramType, parameter);
+		}
+	}
+	
+	// Returns converted object to the selected parameter type
+	public Object evaluatePrimitiveTypes(Class<?> paramType, String parameter) {
+		// Type byte
+		if(isByte(paramType)) {
+			return Byte.valueOf(parameter);
+		}
+		// Type short
+		if(isShort(paramType)) {
+			return Short.parseShort(parameter);
+		}
+		// Type int
+		if(isInt(paramType)) {
+			return Integer.parseInt(parameter);
+		}
+		// Type long
+		if(isLong(paramType, parameter)) {
+			return Long.valueOf(parameter.toLowerCase().replace("l", "")).longValue();
+		}
+		// Type float
+		if(isFloat(paramType, parameter)) {
+			return Float.valueOf(parameter.toLowerCase().replace("f", "")).floatValue();
+		}
+		// Type double
+		if(isDouble(paramType, parameter)) {
+			return Double.valueOf(parameter.toLowerCase().replace("d", "")).doubleValue();
+		}
+		// Type boolean
+		if(isBoolean(paramType, parameter)) {
+			return isBooleanTrue(parameter);
+		}
+		// Type char - nao funciona para por exemplo: \'\\u001\'...Solucao?
+		if(isChar(paramType, parameter)) {
+			return parameter.replace("\'", "").charAt(0);
+		}
+		return null;
+	}
+	
+	// Returns converted object to the selected parameter type
+		public Object evaluateReferenceTypes(Class<?> paramType, String parameter) {
+			String[] array = null;
+			String arrayElements = "";
+			Object[] result = null;
+			
+			// Type String
+			if(isString(paramType, parameter)) {
+				return (String)parameter.replace("\"", "");
+			}
+			if(isArray(paramType, parameter)) {
+				arrayElements = parameter.substring(1, parameter.length() - 1);
+				array = arrayElements.split(",");
+				try {
+					result = (Object[]) paramType.getComponentType().newInstance();
+				} catch (InstantiationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				// All elements of array are of the same type
+				for(int i = 0; i < array.length; i++) {
+					result[i] = evaluateType(paramType.getComponentType(),array[i]);
+				}
+				for(int i = 0; i < result.length; i++) {
+					System.out.println("AKI " + i + ": " + result[i]);
+				}
+				return result;
+			}
+			return null;
+		}
 	
 	/** Checks if paramType is of class String and if starts and ends with quotation marks */
 	public boolean isString(Class<?> paramType, String parameter) {
@@ -385,6 +455,13 @@ public class Inspector {
 	/* Returns true if paramType is of class int */
 	public boolean isInt(Class<?> paramType) {
 		if(paramType.equals(int.class))
+			return true;
+		return false;
+	}
+	
+	/* Returns true if paramType is of class int */
+	public boolean isInteger(Class<?> paramType) {
+		if(paramType.equals(Integer.class))
 			return true;
 		return false;
 	}
@@ -437,6 +514,16 @@ public class Inspector {
 	public boolean isShort(Class<?> paramType) {
 		if(paramType.equals(short.class))
 			return true;
+		return false;
+	}
+	
+	// checks if is an array
+	public boolean isArray(Class<?> paramType, String parameter) {
+		if(paramType.isArray() && 
+		   parameter.startsWith("{") &&
+		   parameter.endsWith("}")) {
+			return true;
+		}
 		return false;
 	}
 	

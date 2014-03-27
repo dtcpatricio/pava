@@ -2,6 +2,7 @@ package a;
 
 public class E extends B {
 	boolean f;
+	public int a = 6;
 	
 	public int g(int h) {
 		return d+h;
@@ -24,8 +25,8 @@ public class E extends B {
 		return array;
 	}
 	
-	public int i(int a) {
-		return a;
+	public int i(int[] a) {
+		return a[0];
 	}
 	
 	/*public int i(double a) {
