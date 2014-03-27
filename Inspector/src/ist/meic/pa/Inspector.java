@@ -32,8 +32,8 @@ public class Inspector {
 	
 	/* Retrieve information about Object object */
 	public void getInformation(Object object) {
-		System.out.println(object.toString() + " is an instance of " + object.getClass());
-		System.out.println("----------");
+		System.err.println(object.toString() + " is an instance of " + object.getClass());
+		System.err.println("----------");
 		getFields(object);
 		getMethods(object);
 		
@@ -44,7 +44,7 @@ public class Inspector {
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
 		while(true) {
-			System.out.print("> ");
+			System.err.print("> ");
 			String[] command = readLine().split(" ");
 			command(command);
 		}
@@ -58,7 +58,7 @@ public class Inspector {
 		do {
 			methods = objectClass.getDeclaredMethods();
 			for (Method method : methods) {
-				System.out.println(method);
+				System.err.println(method);
 			}
 			objectClass = objectClass.getSuperclass();
 		}
@@ -88,8 +88,8 @@ public class Inspector {
 				field.setAccessible(true);
 				try {
 					field.get(object);
-					// Falta imprimir os modifiers
-					System.out.println(field.getType()+ " " + field.getName() + " = " + field.get(object));
+					System.err.println(Modifier.toString(field.getModifiers()) + " " + field.getType()
+							+ " " + field.getName() + " = " + field.get(object));
 				} catch (IllegalArgumentException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -175,6 +175,12 @@ public class Inspector {
 	}
 	
 	private void commandModify(String[] command) {
+		
+		if(command.length != 3) {
+			System.err.println("Invalid command.\nUsage:\n m <field> <value>");
+			return;
+		}
+			
 		String fieldName = command[1];
 		String newValue = command[2];
 		List<Field> classFields;
@@ -194,16 +200,32 @@ public class Inspector {
 			}
 		}
 		
-		// salvaguardar de campos private ou protected
+		/** 
+		 * 	Salvaguardar de campos private ou protected
+		 *  tornando o parâmetro accessível
+		 */
 		f.setAccessible(true);		
 		Type fieldType = f.getGenericType();
 		Object objValue = null;
 		
+		/** 
+		 *  Criar objecto do mesmo tipo do parâmetro,
+		 *  convertendo de uma string, e apanhar a devida
+		 *  excepção que pode ser lançada
+		 *  quando a conversão é inválida
+		 */
+		
+		try {
 		if(fieldType.toString().equals("int"))
 			objValue = new Integer(newValue);
 		
-		if(fieldType.toString().equals("boolean"))
+		if(fieldType.toString().equals("long"))
+			objValue = new Long(newValue);
+		
+		if(fieldType.toString().equals("boolean") &&
+				(newValue.equals("true") || newValue.equals("false") ))
 			objValue = new Boolean(newValue);
+			
 		
 		if(fieldType.toString().equals("short"))
 			objValue = new Short(newValue);
@@ -212,27 +234,44 @@ public class Inspector {
 			objValue = new Byte(newValue);
 		
 		if(fieldType.toString().equals("float"))
-			objValue = new Float(fieldName);
+			objValue = new Float(newValue);
 		
 		if(fieldType.toString().equals("double"))
-			objValue = new Double(fieldName);
+			objValue = new Double(newValue);
+		
+		if(fieldType.toString().equals("char")) {
+			objValue = new Character(sanitizeChar(newValue));
+			if(objValue.equals(" ")) {
+				System.err.println("Invalid modification of a char field.\nThe char should be between \'<char>\'");
+				return;
+			}
+		}
+		
+		if(fieldType.equals(String.class))
+			objValue = new String(newValue);
+		
+		} catch(NumberFormatException nfe) {
+			System.err.println("Invalid attribution.\nThe field is of type " + fieldType);
+			return;
+		}
+		
 		
 		try {
-			
 			f.set(obj, objValue);
 		} catch (NumberFormatException e) {
+			
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		} catch (IllegalAccessException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		try {
-			System.out.println("Testing new written value: " + f.getName() + " = " + f.get(obj));
+			System.err.println(Modifier.toString(f.getModifiers()) + " " + f.getType()
+					+ " " + f.getName() + " = " + f.get(obj));
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -241,6 +280,16 @@ public class Inspector {
 			e.printStackTrace();
 		}
 		
+	}
+
+	private char sanitizeChar(String newValue) {
+		
+		if(newValue.length() == 3 &&
+				newValue.charAt(0) == '\'' &&
+				newValue.charAt(2) == '\'')
+			return newValue.charAt(1);
+		
+		return 0;
 	}
 
 	public void commandClass(String[] command) {

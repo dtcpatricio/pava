@@ -2,6 +2,7 @@ package a;
 
 public class E extends B {
 	boolean f;
+	private char z = 'd';
 	
 	public int g(int h) {
 		return d+h;
