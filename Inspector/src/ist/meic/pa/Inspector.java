@@ -138,7 +138,8 @@ public class Inspector {
 	}
 
 	public void command(String[] command) {
-		commandC(command);
+		//commandC(command);
+		commandModify(command);
 		/*commandI(command);
 		commandQ(command);
 		if(flagCommand == false) {
@@ -536,11 +537,7 @@ public class Inspector {
 			return true;
 		return false;
 	}
-	
-	
-	/**
-	 * 	Module concerning the modify 'm' command
-	 */
+
 	
 	/**
 	 * Código de função do StackOverflow
@@ -582,7 +579,7 @@ public class Inspector {
 			String newValue = command[2];
 			List<Field> classFields;
 			Field f = null;
-			Object obj = previous.get(previous.size() - 1);
+			Object obj = currrent_object;
 			Class<?> objClass = obj.getClass();
 
 			classFields = getFieldsUpTo(objClass, Object.class);
@@ -688,4 +685,5 @@ public class Inspector {
 
 			return 0;
 		}
+	}
 }
