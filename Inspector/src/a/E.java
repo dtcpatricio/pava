@@ -3,6 +3,9 @@ package a;
 public class E extends B {
 	boolean f;
 	public int a = 6;
+
+	private char z = 'd';
+
 	
 	public int g(int h) {
 		return d+h;

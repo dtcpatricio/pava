@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class Inspector {	
 	/* Contains object beign evaluated */
@@ -532,5 +535,157 @@ public class Inspector {
 		if(methods.size() == 1)
 			return true;
 		return false;
-	}	
+	}
+	
+	
+	/**
+	 * 	Module concerning the modify 'm' command
+	 */
+	
+	/**
+	 * Código de função do StackOverflow
+	 * @param startClass
+	 * @param exclusiveParent
+	 * @return type mudado de Iterable<Field> para List<Field>
+	 * @return List<Field> como LinkedList<Field> pois Arrays.asList retorna
+	 *	fixed-size
+	 */
+
+		public static List<Field> getFieldsUpTo(Class<?> startClass,
+				Class<?> exclusiveParent) {
+
+			List<Field> currentClassFields = new LinkedList<Field>(
+					Arrays.asList(startClass.getDeclaredFields()));
+			Class<?> parentClass = startClass.getSuperclass();
+
+			if (parentClass != null && !(parentClass.equals(exclusiveParent))) {
+				List<Field> parentClassFields = (List<Field>) getFieldsUpTo(
+						parentClass, exclusiveParent);
+				currentClassFields.addAll(parentClassFields);
+			}
+
+			return currentClassFields;
+		}
+
+		/**
+		 * Função principal do comando 'm'
+		 * @param command
+		 */
+		private void commandModify(String[] command) {
+
+			if (command.length != 3) {
+				System.err.println("Invalid command.\nUsage:\n m <field> <value>");
+				return;
+			}
+
+			String fieldName = command[1];
+			String newValue = command[2];
+			List<Field> classFields;
+			Field f = null;
+			Object obj = previous.get(previous.size() - 1);
+			Class<?> objClass = obj.getClass();
+
+			classFields = getFieldsUpTo(objClass, Object.class);
+			for (Iterator<Field> iter = classFields.iterator(); iter.hasNext();) {
+				f = iter.next();
+				if (f.getName().equals(fieldName))
+					break;
+
+				if (!iter.hasNext()) {
+					System.err.println("No such field exists on the object");
+					return;
+				}
+			}
+
+			/**
+			 * Salvaguardar de campos private ou protected tornando o parâmetro
+			 * accessível
+			 */
+			f.setAccessible(true);
+			Type fieldType = f.getGenericType();
+			Object objValue = null;
+
+			/**
+			 * Criar objecto do mesmo tipo do parâmetro, convertendo de uma string,
+			 * e apanhar a devida excepção que pode ser lançada quando a conversão é
+			 * inválida
+			 */
+
+			try {
+				if (fieldType.toString().equals("int"))
+					objValue = new Integer(newValue);
+
+				if (fieldType.toString().equals("long"))
+					objValue = new Long(newValue);
+
+				if (fieldType.toString().equals("boolean")
+						&& (newValue.toLowerCase().equals("true") || newValue
+								.equals("false")))
+					objValue = new Boolean(newValue);
+
+				if (fieldType.toString().equals("short"))
+					objValue = new Short(newValue);
+
+				if (fieldType.toString().equals("byte"))
+					objValue = new Byte(newValue);
+
+				if (fieldType.toString().equals("float"))
+					objValue = new Float(newValue);
+
+				if (fieldType.toString().equals("double"))
+					objValue = new Double(newValue);
+
+				if (fieldType.toString().equals("char")) {
+					objValue = new Character(sanitizeChar(newValue));
+					if (objValue.equals(" ")) {
+						System.err
+								.println("Invalid modification of a char field.\nThe char should be between \'<char>\'");
+						return;
+					}
+				}
+
+				if (fieldType.equals(String.class))
+					objValue = new String(newValue);
+
+			} catch (NumberFormatException nfe) {
+				System.err.println("Invalid attribution.\nThe field is of type "
+						+ fieldType);
+				return;
+			}
+
+			try {
+				f.set(obj, objValue);
+			} catch (NumberFormatException e) {
+
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			try {
+				System.err.println(Modifier.toString(f.getModifiers()) + " "
+						+ f.getType() + " " + f.getName() + " = " + f.get(obj));
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+		private char sanitizeChar(String newValue) {
+
+			if (newValue.length() == 3 && newValue.charAt(0) == '\''
+					&& newValue.charAt(2) == '\'')
+				return newValue.charAt(1);
+
+			return 0;
+		}
 }
