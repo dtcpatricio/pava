@@ -2,6 +2,8 @@ package a;
 
 public class E extends B {
 	boolean f;
+	V v = new V();
+	Integer inteiro = 6;
 	
 	public int g(int h) {
 		return d+h;

@@ -4,7 +4,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		Inspector is = new Inspector();
-		Object o1 = Object.class;
+	/*	Object o1 = Object.class;
 		Object o2 = Boolean.class;
 		Object o3 = String.class;
 		Object o4 = Integer.class;
@@ -21,12 +21,12 @@ public class Main {
 		g.listNext();
 		g.insertInspectedNode(o4);
 		g.printGraph();
-
+	 */
 		
 		a.E teste = new a.E(); 
 		
 		
-	//	is.inspect(teste);
+		is.inspect(teste);
 		/* Sera que o comando q permitir a classe continuar a execucao? */
 		System.out.println("\nAFTER EXECUTION OF INSPECT");
 	}

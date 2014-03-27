@@ -6,18 +6,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 public class Inspector {	
 	/* Contains object beign evaluated */
 	Object current_object = null;
-
+	Graph graph;
 	boolean flagCommand = false;
-	
-	List<Object> inspected_objects = new ArrayList<Object>();
+	int EXIT = 0; /* 0 program running, -1 program exit */
+	TreeMap<String, Object> savedObjects = new TreeMap<String,Object>();
 	 
 	public void inspect(Object object) {
-		inspected_objects.add(object);
+		boolean isPrimitive = object.getClass().isPrimitive();
 		current_object = object;
+		graph = new Graph(object, isPrimitive);
 		getInformation(object);
 		read_eval_loop();
 	}
@@ -28,12 +30,13 @@ public class Inspector {
 		getFields(object);
 		getMethods(object);
 		getSuperClasses(object);
-		
+	
 	}
 	
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
 		while(true) {
+			if(EXIT == -1) { return; }
 			System.out.print(" > ");
 			String[] command = readLine().split(" ");
 			command(command);
@@ -141,8 +144,10 @@ public class Inspector {
 	public void command(String[] command) {
 		commandC(command);
 		commandI(command);
-		commandQ(command);
 		navigate(command);
+		commandSave(command);
+		commandShowSaved(command);
+		commandQ(command);
 	/*	if(flagCommand == false) {
 			System.out.println("Error: Unknown command : the term '" + command[0] +
 					"' is not recognized as the name of a command, please try again!\n" +
@@ -164,14 +169,21 @@ public class Inspector {
 				f.setAccessible(true);
 				if(command[1].equals(f.getName())) {
 					try {
+						Class<?> fieldType = f.getType();
+						boolean isPrimitive = false;
 						Object newObj = f.get(current_object).getClass();
-						System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
-						System.out.println("Current Object: " + newObj);
-						/*System.out.println(newObj.equals(Object.class));
-						System.out.println("*** " +  newObj.getClass());*/
-					//	getInformation(newObj); /* AQUI */
+						System.out.println(newObj);
+						
+						/* Check if field_obj is a primitive type */
+
+						if(fieldType.isPrimitive()) {
+							System.err.println("IS PRIMITIVE TYPE");
+							isPrimitive = true;
+						}
+						
+						System.err.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
+						graph.insertInspectedNode(newObj, isPrimitive);
 						current_object = newObj;
-						flagCommand = true;
 						return;
 					} catch (IllegalArgumentException e) { 
 						e.printStackTrace();
@@ -187,22 +199,67 @@ public class Inspector {
 
 	public void commandQ(String[] command) {
 		if(command[0].equals("q")) {
-			System.out.println("Program exited");
-			System.exit(0);
+			System.err.println("Inpector exited");
+			EXIT = -1;
+			return;
 		}
 	}
 	
 	/* Extension 1 - user can navigate back and forth in the graph of inspected objects */
+	/* Allowed user commands : next, previous, ListAll, current */
 	public void navigate(String[] command) {
-		commandList(command);
+		if(command[0].equals("next")) {
+			commandNext(command);
+			return;
+		}
+		if(command[0].equals("previous")) {
+			commandPrevious();
+			return;
+		}
+		if(command[0].equals("lAll")) {
+			commandListAll();
+			return;
+		}
+		if(command[0].equals("current")) {
+			commandCurrent();
+			return;
+		}
 	}
 	
-	public void commandList(String[] command) {
-		if(!command[0].equals("list")) return;
-		System.out.println("Inspected Object: ");
-		for(Object o : inspected_objects) {
-			if(o.equals(current_object)) { System.out.print("Current -> "); }
-			System.out.println(o.toString() + " ");
+	public void commandNext(String[] command) {
+		current_object = graph.listNext();
+	}
+	
+	public void commandPrevious() {
+		current_object = graph.previous();
+	}
+	
+	public void commandListAll() {
+		graph.printGraph();
+	}
+	
+	public void commandCurrent() {
+		graph.printCurrent();
+	}
+	
+	public void commandSave(String[] command) {
+		if(!command[0].equals("save")) {return;}
+		try {
+			String name = command[1];
+			Object curr = graph.getCurrentObject();
+			savedObjects.put(name, curr);
+		} catch(IndexOutOfBoundsException e) {
+			System.out.println("Error: Please provide a name for the object you are trying to save");
+			return;
+		}
+		
+	}
+	
+	public void commandShowSaved(String[] command) {
+		if(!command[0].equals("showSaved")) {return;}
+		System.out.println("-------- Saved Objects --------");
+		for(String s : savedObjects.keySet()) {
+			System.out.println(s + " " + savedObjects.get(s));	
 		}
 	}
 	
@@ -314,8 +371,6 @@ public class Inspector {
 		}
 		return null;
 	}
-	
-	
 	
 	
 	/* returns list that contains all methods with paramNumber as number of parameters */
