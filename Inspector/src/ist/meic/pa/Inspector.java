@@ -294,76 +294,6 @@ public class Inspector {
 		return 0;
 	}
 
-	public void commandClass(String[] command) {
-		try {
-			if (command[0].toLowerCase().equals("class") && !flagCommand) {
-				Class<?> result = getClass(command[1]);
-
-				Object o = null;
-
-				/* input as parameters? */
-				if (command.length >= 3) {
-					if (command[1].equals("java.lang.Integer")) {
-						Constructor<Integer> c = Integer.class
-								.getConstructor(int.class);
-						o = c.newInstance(Integer.parseInt(command[2]));
-					}
-					if (command[1].equals("java.lang.String")) {
-						Constructor<String> c = String.class
-								.getConstructor(String.class);
-						o = c.newInstance(command[2]);
-					}
-				} else {
-					o = result;
-				}
-
-				System.out.println(result);
-				previous.clear();
-				previous.add(o);
-				previous_class = result;
-				flagCommand = true;
-			}
-		} catch (Exception e) {
-			System.err.println("commandClass " + e.getMessage());
-		}
-	}
-
-	public void commandSet(String[] command) {
-		if (command[0].toLowerCase().equals("set") && !flagCommand) {
-			System.out.println("Saved name for object of type: "
-					+ previous.get(previous.size() - 1).getClass());
-			System.out.println(previous.get(previous.size() - 1));
-			Object p = previous.get(previous.size() - 1);
-			variables.put(command[1], p);
-			previous.clear();
-			previous.add(p);
-			flagCommand = true;
-		}
-	}
-
-	public void commandGet(String[] command) {
-		if (command[0].toLowerCase().equals("get") && !flagCommand) {
-			System.out.println(variables.get(command[1]));
-			previous.clear();
-			previous.add(variables.get(command[1]));
-			flagCommand = true;
-		}
-	}
-
-	public void commandIndex(String[] command) {
-		if (command[0].toLowerCase().equals("index") && !flagCommand) {
-			if (previous.size() > Integer.parseInt(command[1])) {
-				Object o = previous.get(Integer.parseInt(command[1]));
-				System.out.println(o);
-				previous.clear();
-				previous.add(o);
-			} else {
-				System.err.println("Index out of bound");
-			}
-			flagCommand = true;
-		}
-	}
-
 	/* Command c name value0 value1 ... valuen */
 	public void commandC(String[] command) {
 		try {
@@ -444,12 +374,4 @@ public class Inspector {
 
 	}
 
-	public void execute() {
-		System.out.println("Insert Command: ");
-
-		String[] command = readLine().split(" ");
-
-		command(command);
-
-	}
 }
