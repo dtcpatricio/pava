@@ -16,6 +16,7 @@ public class Inspector {
 	List<Object> inspected_objects = new ArrayList<Object>();
 	 
 	public void inspect(Object object) {
+		inspected_objects.add(object);
 		current_object = object;
 		getInformation(object);
 		read_eval_loop();
@@ -141,6 +142,7 @@ public class Inspector {
 		commandC(command);
 		commandI(command);
 		commandQ(command);
+		navigate(command);
 	/*	if(flagCommand == false) {
 			System.out.println("Error: Unknown command : the term '" + command[0] +
 					"' is not recognized as the name of a command, please try again!\n" +
@@ -157,7 +159,6 @@ public class Inspector {
 		Field[] fields;
 		Class<?> objectClass = current_object.getClass();
 		while(!objectClass.equals(Object.class)) {
-			System.out.println("Class Name : " + objectClass.getName());
 			fields = objectClass.getDeclaredFields();
 			for(Field f : fields) {
 				f.setAccessible(true);
@@ -166,8 +167,8 @@ public class Inspector {
 						Object newObj = f.get(current_object).getClass();
 						System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
 						System.out.println("Current Object: " + newObj);
-						System.out.println(newObj.equals(Object.class));
-						System.out.println("*** " +  newObj.getClass());
+						/*System.out.println(newObj.equals(Object.class));
+						System.out.println("*** " +  newObj.getClass());*/
 					//	getInformation(newObj); /* AQUI */
 						current_object = newObj;
 						flagCommand = true;
@@ -188,6 +189,20 @@ public class Inspector {
 		if(command[0].equals("q")) {
 			System.out.println("Program exited");
 			System.exit(0);
+		}
+	}
+	
+	/* Extension 1 - user can navigate back and forth in the graph of inspected objects */
+	public void navigate(String[] command) {
+		commandList(command);
+	}
+	
+	public void commandList(String[] command) {
+		if(!command[0].equals("list")) return;
+		System.out.println("Inspected Object: ");
+		for(Object o : inspected_objects) {
+			if(o.equals(current_object)) { System.out.print("Current -> "); }
+			System.out.println(o.toString() + " ");
 		}
 	}
 	
