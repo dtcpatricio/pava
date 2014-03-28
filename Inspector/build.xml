@@ -26,8 +26,7 @@
 
 	<target name="jar" depends="compile" description="Create a .jar file">
 		<jar destfile="inspector.jar" basedir="classes"
-			includes="ist/meic/pa/**"
-			excludes="**/Main.class">
+			includes="ist/meic/pa/**">
 		</jar>
 	</target>
 

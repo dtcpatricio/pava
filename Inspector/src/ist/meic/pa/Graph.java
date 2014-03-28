@@ -83,9 +83,7 @@ public class Graph {
 		System.err.println("IsPrimitive: " + n.hasWriteAcess());
 	}
 	
-	/* Se calhar ter um metodo show? */
 	public void listNext() {
-		Object current_object = null;
 		if(hasNext()) {
 			int id = current_id;
 			Node n = graph.get(id);
@@ -96,24 +94,24 @@ public class Graph {
 				i++;
 			}
 			System.err.println("");
-			/*current_object = */next(n,i);
+			next(n,i);
 		}
-		return; /*graph.get(current_id);*/ /* Vai buscar o mesmo objecto */
+		return;
 	}
 	
-	/* Adjacent node agora já n lança null e faz exit -> corrigir no Node.java */
+
 	public void next(Node n, int number_of_options) {
 		int option = 0;
 		Scanner in = new Scanner(System.in);
 		option = Integer.parseInt(in.nextLine());
 		if((option < 1) || (option > number_of_options)) {
 			System.err.println("Error: Invalid option");
-			return; /* null; */
+			return;
 		}
 		Node chosenNode = n.getAdjacentNode(option-1);
 		System.err.println("Chosen option: " + option + " Object: " + chosenNode.getObject());
 		current_id = chosenNode.getId();
-		return; /*chosenNode.getObject();*/
+		return;
 	}
 	
 }
