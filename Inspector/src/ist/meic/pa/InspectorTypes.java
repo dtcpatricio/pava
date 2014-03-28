@@ -18,7 +18,7 @@ class InspectorByte implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of class byte */
-	public boolean isByte(Class<?> paramType) {
+	private boolean isByte(Class<?> paramType) {
 		if(paramType.equals(byte.class))
 			return true;
 		return false;
@@ -37,7 +37,7 @@ class InspectorShort implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of class short */
-	public boolean isShort(Class<?> paramType) {
+	private boolean isShort(Class<?> paramType) {
 		if(paramType.equals(short.class))
 			return true;
 		return false;
@@ -56,7 +56,7 @@ class InspectorInt implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of class int */
-	public boolean isInt(Class<?> paramType) {
+	private boolean isInt(Class<?> paramType) {
 		if(paramType.equals(int.class))
 			return true;
 		return false;
@@ -75,7 +75,7 @@ class InspectorLong implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of type long and if parameter ends with l or L */
-	public boolean isLong(Class<?> paramType, String parameter) {
+	private boolean isLong(Class<?> paramType, String parameter) {
 		if(paramType.equals(long.class) || parameter.toLowerCase().endsWith("l"))
 			return true;
 		return false;
@@ -94,7 +94,7 @@ class InspectorFloat implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of type long and if parameter ends with f or F */
-	public boolean isFloat(Class<?> paramType, String parameter) {
+	private boolean isFloat(Class<?> paramType, String parameter) {
 		if(paramType.equals(float.class) || parameter.toLowerCase().endsWith("f"))
 			return true;
 		return false;
@@ -115,7 +115,7 @@ class InspectorDouble implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of type long and if parameter ends with d or D */
-	public boolean isDouble(Class<?> paramType, String parameter) {
+	private boolean isDouble(Class<?> paramType, String parameter) {
 		if(paramType.equals(double.class) || parameter.toLowerCase().endsWith("d"))
 			return true;
 		return false;
@@ -135,7 +135,7 @@ class InspectorBoolean implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of class boolean and parameter is true or false */
-	public boolean isBoolean(Class<?> paramType, String parameter) {
+	private boolean isBoolean(Class<?> paramType, String parameter) {
 		if(paramType.equals(boolean.class) && 
 		  (parameter.toLowerCase().equals("true") 
 		   || parameter.toLowerCase().equals("false")))
@@ -144,7 +144,7 @@ class InspectorBoolean implements InspectorTypes {
 	}
 	
 	/* Returns true if has value true, false otherwise */
-	public boolean isBooleanTrue(String parameter) {
+	private boolean isBooleanTrue(String parameter) {
 		if(parameter.toLowerCase().equals("true"))
 			return true;
 		return false;
@@ -163,7 +163,7 @@ class InspectorChar implements InspectorTypes {
 	}
 		
 	/* Returns true if paramType is of class char and if starts and ends with ' */
-	public boolean isChar(Class<?> paramType, String parameter) {
+	private boolean isChar(Class<?> paramType, String parameter) {
 		if(paramType.equals(char.class) && 
 		   parameter.startsWith("\'") && 
 		   parameter.endsWith("\'")) {
@@ -185,7 +185,7 @@ class InspectorString implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of class String and if starts and ends with quotation marks */
-	public boolean isString(Class<?> paramType, String parameter) {
+	private boolean isString(Class<?> paramType, String parameter) {
 		if(paramType.equals(String.class) && 
 		   parameter.startsWith("\"") && 
 		   parameter.endsWith("\"")) {
@@ -207,7 +207,7 @@ class InspectorInteger implements InspectorTypes {
 	}
 	
 	/* Returns true if paramType is of class int */
-	public boolean isInteger(Class<?> paramType) {
+	private boolean isInteger(Class<?> paramType) {
 		if(paramType.equals(Integer.class))
 			return true;
 		return false;
@@ -231,7 +231,8 @@ class InspectorTypesFactory {
 		inspectorTypes.put("double", new InspectorDouble());
 		inspectorTypes.put("boolean", new InspectorBoolean());
 		inspectorTypes.put("char", new InspectorChar());
-		inspectorTypes.put("string", new InspectorString());
+		inspectorTypes.put("class java.lang.String", new InspectorString());
+		inspectorTypes.put("class java.lang.Integer", new InspectorInteger());
 	}
 	
 	public Object getTypeValue(Class<?> paramType, String parameter) {
