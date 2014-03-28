@@ -14,7 +14,7 @@ public class Inspector {
 	/**
 	 * 
 	 */
-	Object current_object;
+	//Object current_object;
 
 	/**
 	 * 
@@ -25,7 +25,7 @@ public class Inspector {
 	 * false inspector running, true inspector exit
 	 */
 	boolean exit;
-
+	
 	/**
 	 * 
 	 */
@@ -41,23 +41,24 @@ public class Inspector {
 	 * of the command - value: name of the method that processes command key
 	 */
 	HashMap<String, String> inspectorCommands;
-
+	
 	/**
 	 * 
 	 */
 	public Inspector() {
-		current_object = null;
+		//	current_object = null;
+		graph = new Graph();
 		exit = false;
 		savedObjects = new TreeMap<String, Object>();
 		types = new InspectorTypesFactory();
 		inspectorCommands = new HashMap<String, String>();
 		initializeCommands();
 	}
-
+	
 	/**
 	 * Insert all commands and respective methods names
 	 */
-	private void initializeCommands() {
+	public void initializeCommands() {
 		inspectorCommands.put("q", "commandQ");
 		inspectorCommands.put("i", "commandI");
 		inspectorCommands.put("m", "commandM");
@@ -73,25 +74,27 @@ public class Inspector {
 
 	/**
 	 * Presents all object's information
-	 * 
-	 * @param object
-	 *            object being evaluated
+	 * @param object object being evaluated
 	 */
 	public void inspect(Object object) {
-		current_object = object;
+		//	current_object = object;
+		graph.insertInspectedNode(object, object.getClass().isPrimitive());
+		//graph = new Graph(object, object.getClass().isPrimitive());
 		exit = false;
-		graph = new Graph(object, object.getClass().isPrimitive());
 		getInformation(object);
 		read_eval_loop();
 	}
 
 	/**
-	 * Retrieve information about object's - Classes - Fields - Methods -
-	 * Superclass's - Interfaces
-	 * 
+	 * Retrieve information about object's
+	 * 	- Classes
+	 *  - Fields
+	 * 	- Methods
+	 * 	- Superclass's
+	 * 	- Interfaces
 	 * @param object
 	 */
-	private void getInformation(Object object) {
+	public void getInformation(Object object) {
 		System.err.println("------------------------------");
 		System.err.println(object.toString() + " is an instance of "
 				+ object.getClass());
@@ -101,13 +104,12 @@ public class Inspector {
 		getInterfaces(object);
 		System.err.println("------------------------------");
 	}
-
+	
 	/**
 	 * Prints all object's fields from classes and superclass's
-	 * 
 	 * @param object
 	 */
-	private void getFields(Object object) {
+	public void getFields(Object object) {
 		System.err.println("----------");
 		System.err.println("Fields:");
 		Class<?> objectClass = object.getClass();
@@ -129,14 +131,14 @@ public class Inspector {
 			}
 		}
 	}
-
+	
 	/**
 	 * @param startClass
 	 * @param exclusiveParent
 	 * @return List<Field>
 	 */
 	public static List<Field> getFieldsUpTo(Class<?> startClass,
-			Class<?> exclusiveParent) {
+	Class<?> exclusiveParent) {
 		List<Field> currentClassFields = new LinkedList<Field>(
 				Arrays.asList(startClass.getDeclaredFields()));
 		Class<?> parentClass = startClass.getSuperclass();
@@ -150,10 +152,9 @@ public class Inspector {
 
 	/**
 	 * Prints all object's methods from classes and superclass's
-	 * 
 	 * @param object
 	 */
-	private void getMethods(Object object) {
+	public void getMethods(Object object) {
 		System.err.println("----------");
 		System.err.println("Methods");
 		Class<?> objectClass = object.getClass();
@@ -166,15 +167,15 @@ public class Inspector {
 			objectClass = objectClass.getSuperclass();
 		} while (!objectClass.equals(Object.class));
 	}
-
+	
 	/**
 	 * Prints all object's superclass's
-	 * 
 	 * @param object
 	 */
-	private void getSuperclass(Object object) {
+	public void getSuperclass(Object object) {
 		System.err.println("----------");
-		System.err.println("Superclass's:");
+		System.err.println("Superclasses:");
+		if(object.getClass().getSuperclass().equals(Object.class)) { return; }
 		Class<?> objectClass = object.getClass().getSuperclass();
 		do {
 			System.err.println("\t" + objectClass);
@@ -184,10 +185,9 @@ public class Inspector {
 
 	/**
 	 * Prints all object's interfaces
-	 * 
 	 * @param object
 	 */
-	private void getInterfaces(Object object) {
+	public void getInterfaces(Object object) {
 		System.err.println("----------");
 		System.err.println("Interfaces:");
 		Class<?> objectClass = object.getClass();
@@ -200,11 +200,11 @@ public class Inspector {
 			objectClass = objectClass.getSuperclass();
 		} while (!objectClass.equals(Object.class));
 	}
-
+	
 	/**
 	 * Read and evaluate commands provided by the user
 	 */
-	private void read_eval_loop() {
+	public void read_eval_loop() {
 		while (!exit) {
 			System.err.print(" > ");
 			String[] command = readLine().split(" ");
@@ -214,10 +214,9 @@ public class Inspector {
 
 	/**
 	 * Read line from standard input stream
-	 * 
 	 * @return line read
 	 */
-	private String readLine() {
+	public String readLine() {
 		Scanner in = new Scanner(System.in);
 		return in.nextLine();
 	}
@@ -250,7 +249,7 @@ public class Inspector {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * Ends inspection of current_object
 	 * 
@@ -260,15 +259,14 @@ public class Inspector {
 		System.err.println("Inpector exited.");
 		exit = true;
 	}
-
+	
 	/**
 	 * Command I
-	 * 
 	 * @param command
 	 */
 	public void commandI(String[] command) {
 		Field[] fields;
-		Class<?> objectClass = current_object.getClass();
+		Class<?> objectClass = graph.getCurrentObject().getClass();
 		try {
 			while (!objectClass.equals(Object.class)) {
 				fields = objectClass.getDeclaredFields();
@@ -277,15 +275,16 @@ public class Inspector {
 					if (command[1].equals(f.getName())) {
 						Class<?> fieldType = f.getType();
 						boolean isPrimitive = false;
-						Object newObj = f.get(current_object).getClass();
+						Object graphObject = graph.getCurrentObject();
+						Object newObj = f.get(graphObject).getClass();
 						System.err.println(newObj);
 						if (fieldType.isPrimitive()) {
 							isPrimitive = true;
 						}
 						System.err.println("Inspected field '" + f.getName()
-								+ "' = " + f.get(current_object));
+								+ "' = " + f.get(graphObject));
 						graph.insertInspectedNode(newObj, isPrimitive);
-						current_object = newObj;
+			
 						return;
 					}
 				}
@@ -312,7 +311,7 @@ public class Inspector {
 
 			List<Field> classFields;
 			Field f = null;
-			Object obj = current_object;
+			Object obj = graph.getCurrentObject();
 			Class<?> objClass = obj.getClass();
 
 			classFields = getFieldsUpTo(objClass, Object.class);
@@ -360,13 +359,47 @@ public class Inspector {
 		}
 
 	}
+	
+	/* AKI: penso que isto nao é necessario, ou se for mesmo necessario deve ficar
+	 * no InspectorTypes
+		private String sanitizeFloat(String newValue) {
+
+			if (newValue.charAt(newValue.length() - 1) == 'f')
+				return newValue.substring(0, newValue.length() - 1);
+
+			throw new IllegalArgumentException(
+					"The given argument is not of type float.\n* Usage <number>f\n"
+							+ "Example: 5f");
+		}
+
+		private String sanitizeLong(String newValue) {
+
+			if (newValue.charAt(newValue.length() - 1) == 'L')
+				return newValue.substring(0, newValue.length() - 1);
+
+			throw new IllegalArgumentException(
+					"The given argument is not of type long.\n* Usage <number>L\n"
+							+ "Example: 5L");
+		}
+
+		private char sanitizeChar(String newValue) {
+
+			if (newValue.length() == 3 && newValue.charAt(0) == '\''
+					&& newValue.charAt(2) == '\'')
+				return newValue.charAt(1);
+
+			throw new IllegalArgumentException(
+					"The given argument is not of type char.\n* Usage \'<char>\'\n"
+							+ "Example: \'d\'");
+		}*/
+
 	/**
 	 * Command C
 	 * 
 	 * @param command
 	 */
 	public void commandC(String[] command) {
-		Class<?> objectClass = current_object.getClass();
+		Class<?> objectClass = graph.getCurrentObject().getClass();
 		Method[] declaredMethods = null;
 		List<Method> allMethods = new ArrayList<Method>();
 		List<Method> methods = new ArrayList<Method>();
@@ -390,14 +423,13 @@ public class Inspector {
 
 		returnResult(result, command[1], allMethods);
 	}
-
+	
 	/**
 	 * Returns list (in string format) of all parameters provided by the user
-	 * 
 	 * @param command
 	 * @return list of parameters
 	 */
-	private List<String> getParameters(String[] command) {
+	public List<String> getParameters(String[] command) {
 		List<String> parameters = new ArrayList<String>();
 
 		for (int cmd = 2; cmd < command.length; cmd++) {
@@ -405,16 +437,14 @@ public class Inspector {
 		}
 		return parameters;
 	}
-
+	
 	/**
 	 * Filter methods by the name of provided methods
-	 * 
-	 * @param methods
-	 *            list of all declared methods of current_object
+	 * @param methods list of all declared methods of current_object
 	 * @param methodName
 	 * @return list with all methods with same name as methodName
 	 */
-	private List<Method> evaluateMethodsName(List<Method> methods,
+	public List<Method> evaluateMethodsName(List<Method> methods,
 			String methodName) {
 		List<Method> bestMethods = new ArrayList<Method>();
 
@@ -425,21 +455,16 @@ public class Inspector {
 		}
 		return bestMethods;
 	}
-
+	
 	/**
-	 * Filter methods that have the same number of parameters as the parameters
-	 * provided by the user
-	 * 
-	 * @param methods
-	 *            methods evaluated and accepted in previous evaluations
-	 * @param paramNumber
-	 *            number of parameters provided by the user
-	 * @param parameters
-	 *            list of parameters provided by the user
+	 * Filter methods that have the same number of parameters as the parameters provided by the user
+	 * @param methods methods evaluated and accepted in previous evaluations
+	 * @param paramNumber number of parameters provided by the user
+	 * @param parameters list of parameters provided by the user
 	 * @return list with methods that have the same number of parameters
 	 */
-	private Object evaluateMethodsParameters(List<Method> methods,
-			int paramNumber, List<String> parameters) {
+	public Object evaluateMethodsParameters(List<Method> methods, int paramNumber,
+			List<String> parameters) {
 		List<Method> bestMethods = new ArrayList<Method>();
 		Class<?>[] param = null;
 		Object result = null;
@@ -465,21 +490,16 @@ public class Inspector {
 	}
 
 	/**
-	 * Filters methods by the type of parameters of method
-	 * 
-	 * @param method
-	 *            methods evaluated and accepted in previous evaluations
-	 * @param params
-	 *            array of parameters of method
-	 * @param parameters
-	 *            list of parameters provided by the user
-	 * @return result of invoking the correct method if any, otherwise an
-	 *         exception is thrown
+	 * Filters methods by the type of parameters of method 
+	 * @param method methods evaluated and accepted in previous evaluations
+	 * @param params array of parameters of method
+	 * @param parameters list of parameters provided by the user
+	 * @return result of invoking the correct method if any, otherwise an exception is thrown
 	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException
 	 * @throws InvocationTargetException
 	 */
-	private Object methodMatchParamType(Method method, Class<?>[] params,
+	public Object methodMatchParamType(Method method, Class<?>[] params,
 			List<String> parameters) throws IllegalArgumentException,
 			IllegalAccessException, InvocationTargetException {
 		Object result = null;
@@ -488,23 +508,22 @@ public class Inspector {
 			args[param] = evaluateType(params[param], parameters.get(param));
 		}
 		method.setAccessible(true);
-		result = method.invoke(current_object, args);
+		result = method.invoke(graph.getCurrentObject(), args);
 		return result;
 	}
 
 	/**
-	 * Evaluates: - if a parameter is a previous saved object by the user, that
-	 * is being used as a parameter; - if paramType is an int array (special
-	 * case) or any of the other supported types.
-	 * 
-	 * @param paramType
-	 *            type of parameter
-	 * @param parameter
-	 *            parameter provided by the user
+	 * Evaluates:
+	 * 	- if a parameter is a previous saved object by the user,
+	 * 	  that is being used as a parameter;
+	 * 	- if paramType is an int array (special case)
+	 * 	  or any of the other supported types.
+	 * @param paramType type of parameter
+	 * @param parameter parameter provided by the user
 	 * @return parameter converted to paramType type
 	 */
-	private Object evaluateType(Class<?> paramType, String parameter) {
-		if (savedObjects.containsKey(parameter)) {
+	public Object evaluateType(Class<?> paramType, String parameter) {
+		if(savedObjects.containsKey(parameter)) {
 			return savedObjects.get(parameter);
 		}
 		if (paramType.isArray()) {
@@ -514,13 +533,11 @@ public class Inspector {
 	}
 
 	/**
-	 * @param paramType
-	 *            type of parameter
-	 * @param parameter
-	 *            parameter provided by the user
+	 * @param paramType type of parameter
+	 * @param parameter parameter provided by the user
 	 * @return parameter converted to an int array
 	 */
-	private Object evaluateIntArray(Class<?> paramType, String parameter) {
+	public Object evaluateIntArray(Class<?> paramType, String parameter) {
 		String[] array = null;
 		String arrayElements = "";
 		int[] result;
@@ -539,13 +556,11 @@ public class Inspector {
 	}
 
 	/**
-	 * @param paramType
-	 *            type of parameter
-	 * @param parameter
-	 *            parameter provided by the user
+	 * @param paramType type of parameter
+	 * @param parameter parameter provided by the user
 	 * @return true if paramType if an int array, false otherwise
 	 */
-	private boolean isIntArray(Class<?> paramType, String parameter) {
+	public boolean isIntArray(Class<?> paramType, String parameter) {
 		if (paramType.isArray() && parameter.startsWith("{")
 				&& parameter.endsWith("}")
 				&& paramType.getComponentType().equals(int.class)) {
@@ -553,13 +568,12 @@ public class Inspector {
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Prints result of invoking method
-	 * 
 	 * @param result
 	 */
-	private void returnResult(Object result, String method, List<Method> methods) {
+	public void returnResult(Object result, String method, List<Method> methods) {
 		if (result == null) {
 			System.err.println("No match found for method " + method);
 			if (methods.size() > 0) {
@@ -572,7 +586,7 @@ public class Inspector {
 			System.err.println(result);
 		}
 	}
-
+	
 	/**
 	 * Prints information about available commands
 	 */
@@ -597,20 +611,21 @@ public class Inspector {
 		System.err.println("\t- current: Shows the current inspected object");
 		System.err.println("\t- save: Save the current inspected object");
 		System.err.println("\t- showsaved: Shows all user saved objects");
+		System.err.println("\t- h: Help information");
 	}
-
+	
 	/**
 	 * @param command
 	 */
 	public void commandNext(String[] command) {
-		current_object = graph.listNext();
+		graph.listNext();
 	}
 
 	/**
 	 * @param command
 	 */
 	public void commandPrevious(String[] command) {
-		current_object = graph.previous();
+		graph.previous();
 	}
 
 	/**
@@ -647,7 +662,7 @@ public class Inspector {
 	 */
 	public void commandShowSaved(String[] command) {
 		System.err.println("-------- Saved Objects --------");
-		for (String s : savedObjects.keySet())
-			System.err.println(s + " " + savedObjects.get(s));
+		for(String s : savedObjects.keySet())
+			System.err.println(s + " " + savedObjects.get(s));	
 	}
 }

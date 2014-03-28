@@ -24,9 +24,10 @@ public class Main {
 	 */
 		
 		a.E teste = new a.E(); 
-		
+		a.B object2 = new a.B();
 		
 		is.inspect(teste);
+		is.inspect(object2);
 	}
 
 }
