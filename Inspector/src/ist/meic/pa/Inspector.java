@@ -294,7 +294,7 @@ public class Inspector {
 	}
 
 	/**
-	 * Command M - modifica os fields do objecto a ser inspeccionado
+	 * Command M - modify the fields of the inspected object
 	 * 
 	 * @param command
 	 */
@@ -323,15 +323,15 @@ public class Inspector {
 			}
 
 			/**
-			 * Salvaguardar de campos private ou protected tornando o parâmetro
-			 * accessível
+			 * Save against private or protected fields, making the parameter
+			 * accessible.
 			 */
 			f.setAccessible(true);
 
 			/**
-			 * Criar objecto do mesmo tipo do parâmetro, convertendo de uma
-			 * string, e apanhar a devida excepção que pode ser lançada quando a
-			 * conversão é inválida
+			 * Create an object of the same type as the parameter, converting from
+			 * a string, and catching the right exception that can be thrown when the
+			 * conversion reaches an invalid state.
 			 */
 
 			Object objValue = null;
