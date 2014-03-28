@@ -34,7 +34,7 @@ public class Node {
 			}
 			i++;
 		}
-		System.out.println("ERROR: User specified an invalid number");
+		System.err.println("ERROR: User specified an invalid number");
 		System.exit(-1);
 		return null;
 	}
