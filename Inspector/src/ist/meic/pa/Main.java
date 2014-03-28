@@ -9,7 +9,7 @@ public class Main {
 		
 		is.inspect(teste);
 		/* Sera que o comando q permitir a classe continuar a execucao? */
-		System.out.println("AFTER EXECUTION OF INSPECT");
+		System.err.println("AFTER EXECUTION OF INSPECT");
 	}
 
 }

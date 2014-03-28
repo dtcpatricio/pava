@@ -23,6 +23,10 @@ public class E extends B {
 		return a;
 	}
 	
+	public int a(int b) {
+		return b;
+	}
+	
 	public int[] arrayInt(int a, int b, int c) {
 		int[] array = new int[] {a, b, c};
 		return array;
