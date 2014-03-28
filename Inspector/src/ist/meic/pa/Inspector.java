@@ -10,10 +10,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-/**
- * @author Susana Ferreira
- *
- */
 public class Inspector {
 	/**
 	 * 
@@ -263,7 +259,6 @@ public class Inspector {
 	
 	/**
 	 * Command I
-	 * AKI: Imprimir IS PRIMITIVE TYPE NECESSARIO???
 	 * @param command
 	 */
 	public void commandI(String[] command) {
@@ -280,7 +275,6 @@ public class Inspector {
 						Object newObj = f.get(current_object).getClass();
 						System.err.println(newObj);
 						if (fieldType.isPrimitive()) {
-							System.err.println("IS PRIMITIVE TYPE");
 							isPrimitive = true;
 						}
 						System.err.println("Inspected field '" + f.getName()
@@ -678,8 +672,6 @@ public class Inspector {
 	}
 	
 	/**
-	 * AKI: introuzir a informacao sobre os restantes comandos 
-	 * (DEIXEM EM LETRAS MINUSCULAS SFF) 
 	 * Prints information about available commands
 	 */
 	/**
@@ -691,12 +683,12 @@ public class Inspector {
 		System.err.println("\t- i name: Inspects the value of the field named name");
 		System.err.println("\t- m name value: Modifies the value of the field named name");
 		System.err.println("\t- c name value0 value1 ... valuen: Calls the method named name");
-		System.err.println("\t- next: ");
-		System.err.println("\t- previous: ");
-		System.err.println("\t- lall: ");
-		System.err.println("\t- current: ");
-		System.err.println("\t- save: ");
-		System.err.println("\t- showsaved: ");
+		System.err.println("\t- next: Allows to move forward in the graph of inspected objects");
+		System.err.println("\t- previous: Allows to move backward in the graph of inspected objects");
+		System.err.println("\t- listall: Shows all objects in the graph of inspected objects");
+		System.err.println("\t- current: Shows the current inspected object");
+		System.err.println("\t- save: Save the current inspected object");
+		System.err.println("\t- showsaved: Shows all user saved objects");
 	}
 	
 	/**
