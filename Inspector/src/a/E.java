@@ -4,6 +4,11 @@ public class E extends B {
 	boolean f;
 	V v = new V();
 	Integer inteiro = 6;
+
+	public int a = 6;
+
+	private char z = 'd';
+
 	
 	public int g(int h) {
 		return d+h;
@@ -21,13 +26,17 @@ public class E extends B {
 		return a;
 	}
 	
+	public int a(int b) {
+		return b;
+	}
+	
 	public int[] arrayInt(int a, int b, int c) {
 		int[] array = new int[] {a, b, c};
 		return array;
 	}
 	
-	public int i(int a) {
-		return a;
+	public int i(int[] a) {
+		return a[0];
 	}
 	
 	/*public int i(double a) {

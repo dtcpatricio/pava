@@ -29,6 +29,7 @@ public class Main {
 		is.inspect(teste);
 		/* Sera que o comando q permitir a classe continuar a execucao? */
 		System.out.println("\nAFTER EXECUTION OF INSPECT");
+
 	}
 
 }
