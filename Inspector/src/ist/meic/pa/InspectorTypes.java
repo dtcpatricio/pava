@@ -6,6 +6,9 @@ interface InspectorTypes {
 	Object returnType(Class<?> paramType, String parameter);
 }
 
+/**
+ * Type byte
+ */
 class InspectorByte implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
 		if(isByte(paramType)) {
@@ -22,16 +25,18 @@ class InspectorByte implements InspectorTypes {
 	}
 }
 	
+/**
+ * Type short
+ */
 class InspectorShort implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
-		// Type short
 		if(isShort(paramType)) {
 			return Short.parseShort(parameter);
 		}
 		return null;
 	}
 	
-	/* Returns true if paramType is of class int */
+	/* Returns true if paramType is of class short */
 	public boolean isShort(Class<?> paramType) {
 		if(paramType.equals(short.class))
 			return true;
@@ -39,9 +44,11 @@ class InspectorShort implements InspectorTypes {
 	}
 }
 
+/**
+ * Type int
+ */
 class InspectorInt implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
-		// Type int
 		if(isInt(paramType)) {
 			return Integer.parseInt(parameter);
 		}
@@ -56,9 +63,11 @@ class InspectorInt implements InspectorTypes {
 	}
 }
 
+/**
+ * Type long
+ */
 class InspectorLong implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
-		// Type long
 		if(isLong(paramType, parameter)) {
 			return Long.valueOf(parameter.toLowerCase().replace("l", "")).longValue();
 		}
@@ -73,16 +82,18 @@ class InspectorLong implements InspectorTypes {
 	}
 }
 
+/**
+ * Type float
+ */
 class InspectorFloat implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
-		// Type float
 		if(isFloat(paramType, parameter)) {
 			return Float.valueOf(parameter.toLowerCase().replace("f", "")).floatValue();
 		}
 		return null;
 	}
 	
-	/* Returns true if paramType is of type long and if parameter ends with l or L */
+	/* Returns true if paramType is of type long and if parameter ends with f or F */
 	public boolean isFloat(Class<?> paramType, String parameter) {
 		if(paramType.equals(float.class) || parameter.toLowerCase().endsWith("f"))
 			return true;
@@ -91,6 +102,9 @@ class InspectorFloat implements InspectorTypes {
 	
 }
 
+/**
+ * Type double
+ */
 class InspectorDouble implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
 		// Type double
@@ -100,7 +114,7 @@ class InspectorDouble implements InspectorTypes {
 		return null;
 	}
 	
-	/* Returns true if paramType is of type long and if parameter ends with l or L */
+	/* Returns true if paramType is of type long and if parameter ends with d or D */
 	public boolean isDouble(Class<?> paramType, String parameter) {
 		if(paramType.equals(double.class) || parameter.toLowerCase().endsWith("d"))
 			return true;
@@ -108,6 +122,9 @@ class InspectorDouble implements InspectorTypes {
 	}
 }
 
+/**
+ * Type boolean
+ */
 class InspectorBoolean implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
 		// Type boolean
@@ -134,6 +151,9 @@ class InspectorBoolean implements InspectorTypes {
 	}
 }
 
+/**
+ * Type char
+ */
 class InspectorChar implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
 		if(isChar(paramType, parameter)) {
@@ -142,7 +162,7 @@ class InspectorChar implements InspectorTypes {
 		return null;
 	}
 		
-	/** Checks if paramType is of class char and if starts and ends with ' */
+	/* Returns true if paramType is of class char and if starts and ends with ' */
 	public boolean isChar(Class<?> paramType, String parameter) {
 		if(paramType.equals(char.class) && 
 		   parameter.startsWith("\'") && 
@@ -153,8 +173,10 @@ class InspectorChar implements InspectorTypes {
 	}
 }
 
+/**
+ * Type String
+ */
 class InspectorString implements InspectorTypes {
-	// Type String
 	public Object returnType(Class<?> paramType, String parameter) {
 		if(isString(paramType, parameter)) {
 			return (String)parameter.replace("\"", "");
@@ -162,7 +184,7 @@ class InspectorString implements InspectorTypes {
 		return null;
 	}
 	
-	/** Checks if paramType is of class String and if starts and ends with quotation marks */
+	/* Returns true if paramType is of class String and if starts and ends with quotation marks */
 	public boolean isString(Class<?> paramType, String parameter) {
 		if(paramType.equals(String.class) && 
 		   parameter.startsWith("\"") && 
@@ -173,6 +195,9 @@ class InspectorString implements InspectorTypes {
 	}
 }
 
+/**
+ * Type Integer
+ */
 class InspectorInteger implements InspectorTypes {
 	public Object returnType(Class<?> paramType, String parameter) {
 		if(isInteger(paramType)) {
@@ -189,6 +214,10 @@ class InspectorInteger implements InspectorTypes {
 	}
 }
 
+/**
+ * Creates a hash map that stores all available types
+ * and the respective class for the type conversion
+ */
 class InspectorTypesFactory {
 	HashMap<String, InspectorTypes> inspectorTypes;
 	
