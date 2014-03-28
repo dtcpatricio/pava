@@ -11,10 +11,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Inspector {
-	/**
-	 * 
-	 */
-	//Object current_object;
 
 	/**
 	 * 
@@ -58,7 +54,7 @@ public class Inspector {
 	/**
 	 * Insert all commands and respective methods names
 	 */
-	public void initializeCommands() {
+	private void initializeCommands() {
 		inspectorCommands.put("q", "commandQ");
 		inspectorCommands.put("i", "commandI");
 		inspectorCommands.put("m", "commandM");
@@ -94,7 +90,7 @@ public class Inspector {
 	 * 	- Interfaces
 	 * @param object
 	 */
-	public void getInformation(Object object) {
+	private void getInformation(Object object) {
 		System.err.println("------------------------------");
 		System.err.println(object.toString() + " is an instance of "
 				+ object.getClass());
@@ -109,7 +105,7 @@ public class Inspector {
 	 * Prints all object's fields from classes and superclass's
 	 * @param object
 	 */
-	public void getFields(Object object) {
+	private void getFields(Object object) {
 		System.err.println("----------");
 		System.err.println("Fields:");
 		Class<?> objectClass = object.getClass();
@@ -154,7 +150,7 @@ public class Inspector {
 	 * Prints all object's methods from classes and superclass's
 	 * @param object
 	 */
-	public void getMethods(Object object) {
+	private void getMethods(Object object) {
 		System.err.println("----------");
 		System.err.println("Methods");
 		Class<?> objectClass = object.getClass();
@@ -172,7 +168,7 @@ public class Inspector {
 	 * Prints all object's superclass's
 	 * @param object
 	 */
-	public void getSuperclass(Object object) {
+	private void getSuperclass(Object object) {
 		System.err.println("----------");
 		System.err.println("Superclasses:");
 		if(object.getClass().getSuperclass().equals(Object.class)) { return; }
@@ -187,7 +183,7 @@ public class Inspector {
 	 * Prints all object's interfaces
 	 * @param object
 	 */
-	public void getInterfaces(Object object) {
+	private void getInterfaces(Object object) {
 		System.err.println("----------");
 		System.err.println("Interfaces:");
 		Class<?> objectClass = object.getClass();
@@ -204,7 +200,7 @@ public class Inspector {
 	/**
 	 * Read and evaluate commands provided by the user
 	 */
-	public void read_eval_loop() {
+	private void read_eval_loop() {
 		while (!exit) {
 			System.err.print(" > ");
 			String[] command = readLine().split(" ");
@@ -216,7 +212,7 @@ public class Inspector {
 	 * Read line from standard input stream
 	 * @return line read
 	 */
-	public String readLine() {
+	private String readLine() {
 		Scanner in = new Scanner(System.in);
 		return in.nextLine();
 	}
@@ -298,8 +294,7 @@ public class Inspector {
 	}
 
 	/**
-	 * Command M AKI: Duarte era fixe se este metodo pudesse ficar mais pequeno
-	 * se conseguisses
+	 * Command M - modifica os fields do objecto a ser inspeccionado
 	 * 
 	 * @param command
 	 */
@@ -359,39 +354,6 @@ public class Inspector {
 		}
 
 	}
-	
-	/* AKI: penso que isto nao é necessario, ou se for mesmo necessario deve ficar
-	 * no InspectorTypes
-		private String sanitizeFloat(String newValue) {
-
-			if (newValue.charAt(newValue.length() - 1) == 'f')
-				return newValue.substring(0, newValue.length() - 1);
-
-			throw new IllegalArgumentException(
-					"The given argument is not of type float.\n* Usage <number>f\n"
-							+ "Example: 5f");
-		}
-
-		private String sanitizeLong(String newValue) {
-
-			if (newValue.charAt(newValue.length() - 1) == 'L')
-				return newValue.substring(0, newValue.length() - 1);
-
-			throw new IllegalArgumentException(
-					"The given argument is not of type long.\n* Usage <number>L\n"
-							+ "Example: 5L");
-		}
-
-		private char sanitizeChar(String newValue) {
-
-			if (newValue.length() == 3 && newValue.charAt(0) == '\''
-					&& newValue.charAt(2) == '\'')
-				return newValue.charAt(1);
-
-			throw new IllegalArgumentException(
-					"The given argument is not of type char.\n* Usage \'<char>\'\n"
-							+ "Example: \'d\'");
-		}*/
 
 	/**
 	 * Command C
@@ -429,7 +391,7 @@ public class Inspector {
 	 * @param command
 	 * @return list of parameters
 	 */
-	public List<String> getParameters(String[] command) {
+	private List<String> getParameters(String[] command) {
 		List<String> parameters = new ArrayList<String>();
 
 		for (int cmd = 2; cmd < command.length; cmd++) {
@@ -444,7 +406,7 @@ public class Inspector {
 	 * @param methodName
 	 * @return list with all methods with same name as methodName
 	 */
-	public List<Method> evaluateMethodsName(List<Method> methods,
+	private List<Method> evaluateMethodsName(List<Method> methods,
 			String methodName) {
 		List<Method> bestMethods = new ArrayList<Method>();
 
@@ -463,7 +425,7 @@ public class Inspector {
 	 * @param parameters list of parameters provided by the user
 	 * @return list with methods that have the same number of parameters
 	 */
-	public Object evaluateMethodsParameters(List<Method> methods, int paramNumber,
+	private Object evaluateMethodsParameters(List<Method> methods, int paramNumber,
 			List<String> parameters) {
 		List<Method> bestMethods = new ArrayList<Method>();
 		Class<?>[] param = null;
@@ -499,7 +461,7 @@ public class Inspector {
 	 * @throws IllegalAccessException
 	 * @throws InvocationTargetException
 	 */
-	public Object methodMatchParamType(Method method, Class<?>[] params,
+	private Object methodMatchParamType(Method method, Class<?>[] params,
 			List<String> parameters) throws IllegalArgumentException,
 			IllegalAccessException, InvocationTargetException {
 		Object result = null;
@@ -522,7 +484,7 @@ public class Inspector {
 	 * @param parameter parameter provided by the user
 	 * @return parameter converted to paramType type
 	 */
-	public Object evaluateType(Class<?> paramType, String parameter) {
+	private Object evaluateType(Class<?> paramType, String parameter) {
 		if(savedObjects.containsKey(parameter)) {
 			return savedObjects.get(parameter);
 		}
@@ -537,7 +499,7 @@ public class Inspector {
 	 * @param parameter parameter provided by the user
 	 * @return parameter converted to an int array
 	 */
-	public Object evaluateIntArray(Class<?> paramType, String parameter) {
+	private Object evaluateIntArray(Class<?> paramType, String parameter) {
 		String[] array = null;
 		String arrayElements = "";
 		int[] result;
@@ -560,7 +522,7 @@ public class Inspector {
 	 * @param parameter parameter provided by the user
 	 * @return true if paramType if an int array, false otherwise
 	 */
-	public boolean isIntArray(Class<?> paramType, String parameter) {
+	private boolean isIntArray(Class<?> paramType, String parameter) {
 		if (paramType.isArray() && parameter.startsWith("{")
 				&& parameter.endsWith("}")
 				&& paramType.getComponentType().equals(int.class)) {
@@ -573,7 +535,7 @@ public class Inspector {
 	 * Prints result of invoking method
 	 * @param result
 	 */
-	public void returnResult(Object result, String method, List<Method> methods) {
+	private void returnResult(Object result, String method, List<Method> methods) {
 		if (result == null) {
 			System.err.println("No match found for method " + method);
 			if (methods.size() > 0) {
