@@ -1,0 +1,12 @@
+ This readme serves as a note remainder.
+ 
+ (both printing of the object features and reading of inspection commands) should be done on System.err.
+ 
+ Dúvida:
+ O comando i inspecciona o valor de um dado campo do object corrente e faz desse valor o objecto inspeccionado, então
+ no caso de se fazer:
+ > i f
+ false
+ 
+ o objecto corrente agora é a class que representa o false, i.e., class java.lang.Boolean ou é necessário instanciar um objecto 
+ do tipo java.lang.Boolean?

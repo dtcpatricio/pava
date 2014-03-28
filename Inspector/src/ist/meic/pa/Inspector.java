@@ -4,6 +4,7 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,15 +14,20 @@ public class Inspector {
 	 * Contains object beign evaluated
 	 */
 	Object current_object = null;
+	Graph graph;
+	boolean flagCommand = false;
+	int EXIT = 0; /* 0 program running, -1 program exit */
+	TreeMap<String, Object> savedObjects = new TreeMap<String, Object>();
 
 	InspectorTypesFactory types;
-	boolean flagCommand = false;
 
 	public Inspector() {
 	}
 
 	public void inspect(Object object) {
+		boolean isPrimitive = object.getClass().isPrimitive();
 		current_object = object;
+		graph = new Graph(object, isPrimitive);
 		getInformation(object);
 		read_eval_loop();
 	}
@@ -42,13 +48,17 @@ public class Inspector {
 		getMethods(object);
 		getSuperClasses(object);
 		getInterfaces(object);
-
 	}
 
 	/* reads ands evaluate commands provided by the user */
 	public void read_eval_loop() {
+
 		while (true) {
-			System.err.print(" > ");
+			if (EXIT == -1) {
+				return;
+			}
+			System.out.print(" > ");
+
 			String[] command = readLine().split(" ");
 			command(command);
 		}
@@ -68,6 +78,7 @@ public class Inspector {
 	}
 
 	public void getSuperClasses(Object object) {
+
 		System.err.println("----------");
 		System.err.println("Superclasses:");
 		Class<?> objectClass = object.getClass().getSuperclass();
@@ -124,19 +135,135 @@ public class Inspector {
 	}
 
 	public void command(String[] command) {
-		// commandC(command);
+
 		if (command[0].toLowerCase().equals("m"))
 			commandModify(command);
 
 		if (command[0].toLowerCase().equals("c"))
 			commandC(command);
+
+		if (!command[0].toLowerCase().equals("i"))
+			commandI(command);
+
+		/**
+		 * Comandos de navegação no grafo de objectos Extension 1 - user can
+		 * navigate back and forth in the graph of inspected objects Allowed
+		 * user commands : next, previous, ListAll, current
+		 */
+		if (command[0].equals("next"))
+			commandNext(command);
+
+		if (command[0].equals("previous"))
+			commandPrevious();
+
+		if (command[0].equals("lAll"))
+			commandListAll();
+
+		if (command[0].equals("current"))
+			commandCurrent();
+
+		if (command[0].toLowerCase().equals("save"))
+			commandSave(command);
+
+		if (command[0].toLowerCase().equals("showSaved"))
+			commandShowSaved(command);
+
+		if (command[0].toLowerCase().equals("q"))
+			commandQ(command);
+
 		/*
-		 * commandI(command); commandQ(command); if(flagCommand == false) {
+		 * if(flagCommand == false) {
 		 * System.out.println("Error: Unknown command : the term '" + command[0]
 		 * + "' is not recognized as the name of a command, please try again!\n"
 		 * + "Type -help for more information"); } flagCommand = false;
 		 */
 	}
+
+	public void commandI(String[] command) {
+		if (!command[0].equals("i")) {
+			return;
+		}
+		Field[] fields;
+		Class<?> objectClass = current_object.getClass();
+		while (!objectClass.equals(Object.class)) {
+			fields = objectClass.getDeclaredFields();
+			for (Field f : fields) {
+				f.setAccessible(true);
+				if (command[1].equals(f.getName())) {
+					try {
+						Class<?> fieldType = f.getType();
+						boolean isPrimitive = false;
+						Object newObj = f.get(current_object).getClass();
+						System.out.println(newObj);
+
+						/* Check if field_obj is a primitive type */
+
+						if (fieldType.isPrimitive()) {
+							System.err.println("IS PRIMITIVE TYPE");
+							isPrimitive = true;
+						}
+
+						System.err.println("Inspected field '" + f.getName()
+								+ "' = " + f.get(current_object));
+						graph.insertInspectedNode(newObj, isPrimitive);
+						current_object = newObj;
+						return;
+					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			objectClass = objectClass.getSuperclass();
+		}
+		flagCommand = true;
+	}
+
+	public void commandQ(String[] command) {
+
+		System.err.println("Inpector exited");
+		EXIT = -1;
+		return;
+	}
+
+	public void commandNext(String[] command) {
+		current_object = graph.listNext();
+	}
+
+	public void commandPrevious() {
+		current_object = graph.previous();
+	}
+
+	public void commandListAll() {
+		graph.printGraph();
+	}
+
+	public void commandCurrent() {
+		graph.printCurrent();
+	}
+
+	public void commandSave(String[] command) {
+
+		try {
+			String name = command[1];
+			Object curr = graph.getCurrentObject();
+			savedObjects.put(name, curr);
+		} catch (IndexOutOfBoundsException e) {
+			System.out
+					.println("Error: Please provide a name for the object you are trying to save");
+			return;
+		}
+
+	}
+
+	public void commandShowSaved(String[] command) {
+		
+		System.out.println("-------- Saved Objects --------");
+		for(String s : savedObjects.keySet())
+			System.out.println(s + " " + savedObjects.get(s));	
+	}
+	
 
 	/* Returns list (in string format) of all parameters provided by the user */
 	public List<String> getParameters(String[] command) {
@@ -174,6 +301,7 @@ public class Inspector {
 					parameters);
 
 			objectClass = objectClass.getSuperclass();
+
 		} while (!objectClass.equals(Object.class) && result == null);
 
 		returnResult(result, command[1], allMethods);
@@ -286,7 +414,7 @@ public class Inspector {
 
 	// Return an object array the first element of the array is either 0 or 1
 	// 0 means the type of the return is not an array, 1 otherwise
-	public Object evaluateType(Class<?> paramType, String parameter) {		
+	public Object evaluateType(Class<?> paramType, String parameter) {
 		if (paramType.isArray()) {
 			return evaluateIntArray(paramType, parameter);
 		}
@@ -322,7 +450,6 @@ public class Inspector {
 		}
 		return false;
 	}
-
 
 	/**
 	 * Função principal do comando 'm'

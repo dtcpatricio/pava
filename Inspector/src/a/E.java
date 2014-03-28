@@ -2,6 +2,9 @@ package a;
 
 public class E extends B {
 	boolean f;
+	V v = new V();
+	Integer inteiro = 6;
+
 	public int a = 6;
 
 	private char z = 'd';
