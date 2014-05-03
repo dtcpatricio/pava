@@ -14,7 +14,6 @@ public class MyTranslator implements Translator {
 	public void onLoad(ClassPool pool, String className) throws NotFoundException,
 			CannotCompileException {
 		CtClass ctClass = pool.get(className);
-		System.out.println("Calling makeUndoable with ctClass: " + ctClass.toString());
 		makeUndoable(ctClass);
 	}
 
@@ -24,6 +23,9 @@ public class MyTranslator implements Translator {
 		// TODO Auto-generated method stub
 	}
 	
+	// TODO: Change method name
+	// TODO: Different Translators for different methods, fields, constructors?
+	// TODO: Format system out
 	void makeUndoable(CtClass ctClass) throws CannotCompileException {
 		for(CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 			ctMethod.instrument(new ExprEditor() {
