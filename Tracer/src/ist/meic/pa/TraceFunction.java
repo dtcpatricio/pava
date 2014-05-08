@@ -2,33 +2,27 @@ package ist.meic.pa;
 
 public class TraceFunction {
 
-	private String name;
+	private String constructorCall;
+	/*private String name;
 	// Input parameters
-	private String returnType;
+	private String returnType;*/
 	
 	public TraceFunction() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public String getName() {
-		return name;
+	public String getConstructorCall() {
+		return constructorCall;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setConstructorCall(String call) {
+		constructorCall = call;
 	}
-
-	public String getReturnType() {
-		return returnType;
-	}
-
-	public void setReturnType(String returnType) {
-		this.returnType = returnType;
-	}
+	
 
 	@Override
 	public String toString() {
-		return "Function name: " + name + " return type is: " + returnType;
+		return "Susana";//"Function name: " + name + " return type is: " + returnType;
 	}
 	
 }

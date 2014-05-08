@@ -7,8 +7,6 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 
 public class TestCasaPaulo {
-
-	ArrayList<Integer> hashCodes = new ArrayList<Integer>();
 	
 	public Object foo() {
 		String s = new String("Foo");
