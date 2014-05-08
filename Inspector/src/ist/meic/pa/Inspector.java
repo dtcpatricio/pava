@@ -4,446 +4,627 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 
-public class Inspector {	
-	/* Contains object beign evaluated */
-	Object current_object = null;
+public class Inspector {
 
-	boolean flagCommand = false;
+	/**
+	 * 
+	 */
+	Graph graph;
+
+	/**
+	 * false inspector running, true inspector exit
+	 */
+	boolean exit;
 	
+	/**
+	 * 
+	 */
+	TreeMap<String, Object> savedObjects;
+
+	/**
+	 * All types supported by inspector
+	 */
+	InspectorTypesFactory types;
+
+	/**
+	 * Contains all commands supported by inspector - key: represents the name
+	 * of the command - value: name of the method that processes command key
+	 */
+	HashMap<String, String> inspectorCommands;
+	
+	/**
+	 * 
+	 */
+	public Inspector() {
+		//	current_object = null;
+		graph = new Graph();
+		exit = false;
+		savedObjects = new TreeMap<String, Object>();
+		types = new InspectorTypesFactory();
+		inspectorCommands = new HashMap<String, String>();
+		initializeCommands();
+	}
+	
+	/**
+	 * Insert all commands and respective methods names
+	 */
+	private void initializeCommands() {
+		inspectorCommands.put("q", "commandQ");
+		inspectorCommands.put("i", "commandI");
+		inspectorCommands.put("m", "commandM");
+		inspectorCommands.put("c", "commandC");
+		inspectorCommands.put("h", "commandH");
+		inspectorCommands.put("next", "commandNext");
+		inspectorCommands.put("previous", "commandPrevious");
+		inspectorCommands.put("listall", "commandListAll");
+		inspectorCommands.put("current", "commandCurrent");
+		inspectorCommands.put("save", "commandSave");
+		inspectorCommands.put("showsaved", "commandShowSaved");
+	}
+
+	/**
+	 * Presents all object's information
+	 * @param object object being evaluated
+	 */
 	public void inspect(Object object) {
-		current_object = object;
+		//	current_object = object;
+		graph.insertInspectedNode(object, object.getClass().isPrimitive());
+		//graph = new Graph(object, object.getClass().isPrimitive());
+		exit = false;
 		getInformation(object);
 		read_eval_loop();
 	}
-	
-	/* Retrieve information about Object object */
-	public void getInformation(Object object) {
-		System.out.println(object.toString() + " is an instance of " + object.getClass());
+
+	/**
+	 * Retrieve information about object's
+	 * 	- Classes
+	 *  - Fields
+	 * 	- Methods
+	 * 	- Superclass's
+	 * 	- Interfaces
+	 * @param object
+	 */
+	private void getInformation(Object object) {
+		System.err.println("------------------------------");
+		System.err.println(object.toString() + " is an instance of "
+				+ object.getClass());
 		getFields(object);
 		getMethods(object);
-		getSuperClasses(object);
-		
+		getSuperclass(object);
+		getInterfaces(object);
+		System.err.println("------------------------------");
 	}
 	
-	/* reads ands evaluate commands provided by the user */
-	public void read_eval_loop() {
-		while(true) {
-			System.out.print(" > ");
-			String[] command = readLine().split(" ");
-			command(command);
+	/**
+	 * Prints all object's fields from classes and superclass's
+	 * @param object
+	 */
+	private void getFields(Object object) {
+		System.err.println("----------");
+		System.err.println("Fields:");
+		Class<?> objectClass = object.getClass();
+		List<Field> fields = getFieldsUpTo(objectClass, Object.class);
+
+		for (Iterator<Field> iter = fields.iterator(); iter.hasNext();) {
+			Field f = iter.next();
+			f.setAccessible(true);
+			try {
+				System.err.println("\t" + Modifier.toString(f.getModifiers())
+						+ " " + f.getType() + " " + f.getName() + " = "
+						+ f.get(object));
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				continue;
+			} catch (IllegalAccessException e) {
+				System.err.println(e.getMessage());
+				continue;
+			}
 		}
 	}
 	
-	public Inspector() {
+	/**
+	 * @param startClass
+	 * @param exclusiveParent
+	 * @return List<Field>
+	 */
+	public static List<Field> getFieldsUpTo(Class<?> startClass,
+	Class<?> exclusiveParent) {
+		List<Field> currentClassFields = new LinkedList<Field>(
+				Arrays.asList(startClass.getDeclaredFields()));
+		Class<?> parentClass = startClass.getSuperclass();
+		if (parentClass != null && !(parentClass.equals(exclusiveParent))) {
+			List<Field> parentClassFields = (List<Field>) getFieldsUpTo(
+					parentClass, exclusiveParent);
+			currentClassFields.addAll(parentClassFields);
+		}
+		return currentClassFields;
 	}
-	
-	public void getMethods(Object object) {
-		System.out.println("----------");
-		System.out.println("Methods");
+
+	/**
+	 * Prints all object's methods from classes and superclass's
+	 * @param object
+	 */
+	private void getMethods(Object object) {
+		System.err.println("----------");
+		System.err.println("Methods");
 		Class<?> objectClass = object.getClass();
 		Method[] ms;
 		do {
 			ms = objectClass.getDeclaredMethods();
 			for (Method method : ms) {
-				System.out.println("\t" + method);
+				System.err.println("\t" + method);
 			}
 			objectClass = objectClass.getSuperclass();
-		}
-		while(!objectClass.equals(Object.class));
+		} while (!objectClass.equals(Object.class));
 	}
 	
-	public void getSuperClasses(Object object) {
-		System.out.println("----------");
-		System.out.println("Superclasses:");
+	/**
+	 * Prints all object's superclass's
+	 * @param object
+	 */
+	private void getSuperclass(Object object) {
+		System.err.println("----------");
+		System.err.println("Superclasses:");
+		if(object.getClass().getSuperclass().equals(Object.class)) { return; }
 		Class<?> objectClass = object.getClass().getSuperclass();
 		do {
-			System.out.println("\t" + objectClass);
+			System.err.println("\t" + objectClass);
 			objectClass = objectClass.getSuperclass();
-		}
-		while(!objectClass.equals(Object.class));
+		} while (!objectClass.equals(Object.class));
 	}
-	
-	/* Duvida: os fields private e protected de superclasses devem ser impressos? 
-	 * E os static imprimem-se?*/
-	public void getFields(Object object) {
-		System.out.println("----------");
-		System.out.println("Fields:");
+
+	/**
+	 * Prints all object's interfaces
+	 * @param object
+	 */
+	private void getInterfaces(Object object) {
+		System.err.println("----------");
+		System.err.println("Interfaces:");
 		Class<?> objectClass = object.getClass();
-		Field[] fields;
+		Class<?>[] interfaces;
 		do {
-			fields = objectClass.getDeclaredFields();
-			for (Field field : fields) {
-				field.setAccessible(true);
-				try {
-					field.get(object);
-					// Falta imprimir os modifiers
-					System.out.println("\t" + field.getType()+ " " + field.getName() + " = " + field.get(object));
-				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			interfaces = objectClass.getInterfaces();
+			for (Class<?> i : interfaces) {
+				System.err.println("\t" + i);
 			}
 			objectClass = objectClass.getSuperclass();
-		}
-		while(!objectClass.equals(Object.class));
+		} while (!objectClass.equals(Object.class));
 	}
 	
-	public String readLine() {
+	/**
+	 * Read and evaluate commands provided by the user
+	 */
+	private void read_eval_loop() {
+		while (!exit) {
+			System.err.print(" > ");
+			String[] command = readLine().split(" ");
+			evaluateCommand(command);
+		}
+	}
+
+	/**
+	 * Read line from standard input stream
+	 * @return line read
+	 */
+	private String readLine() {
 		Scanner in = new Scanner(System.in);
 		return in.nextLine();
 	}
 
-	public Class<?> getClass(String className) {
+	/**
+	 * Evaluates command provided by the user
+	 * 
+	 * @param command
+	 */
+	private void evaluateCommand(String[] command) {
+		String method = command[0].toLowerCase();
 		try {
-			return (Class.forName(className));
-		} catch (ClassNotFoundException cnfe) {
-			System.err.println("Class '" + className + "' not found");
-			return null;
-		}
-	}
-
-	public Method bestMethod(Class<?> type, String name, Class<?> argType) throws NoSuchMethodException {
-		try {
-			return type.getMethod(name, argType);
-		} catch (NoSuchMethodException e) {
-			if (argType == Object.class) {
-				throw new NoSuchMethodException(name);
+			if (inspectorCommands.containsKey(method)) {
+				Method commandMethod = this.getClass().getDeclaredMethod(
+						inspectorCommands.get(method), String[].class);
+				commandMethod.invoke(this, new Object[] { command });
 			} else {
-				return bestMethod(type, name, argType.getSuperclass());
+				System.err.println("Command " + command[0] + " is invalid.");
+				commandH(command);
 			}
-		}
-	}
-
-	public Object invoke(Object receiver, String name, Object arg) {
-		try {
-			System.out.println("INVOKE");
-			Method method = bestMethod(receiver.getClass(), name, arg.getClass());
-			return method.invoke(receiver, arg);
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+			e.printStackTrace();
 		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
 		}
-	}
-
-	public void command(String[] command) {
-		commandC(command);
-		/*commandI(command);
-		commandQ(command);
-		if(flagCommand == false) {
-			System.out.println("Error: Unknown command : the term '" + command[0] +
-					"' is not recognized as the name of a command, please try again!\n" +
-					"Type -help for more information");
-		}
-		flagCommand = false;*/
 	}
 	
+	/**
+	 * Ends inspection of current_object
+	 * 
+	 * @param command
+	 */
+	public void commandQ(String[] command) {
+		System.err.println("Inpector exited.");
+		exit = true;
+	}
+	
+	/**
+	 * Command I
+	 * @param command
+	 */
 	public void commandI(String[] command) {
-		if(command[0].equals("i")) {
-			Field[] fields;
-			Class<?> objectClass = current_object.getClass();
-			while(!objectClass.equals(Object.class)) {
-				System.out.println("Class Name : " + objectClass.getName());
+		Field[] fields;
+		Class<?> objectClass = graph.getCurrentObject().getClass();
+		try {
+			while (!objectClass.equals(Object.class)) {
 				fields = objectClass.getDeclaredFields();
-				for(Field f : fields) {
+				for (Field f : fields) {
 					f.setAccessible(true);
-					//System.out.println("FIELD: " + f.getName());
-					if(command[1].equals(f.getName())) {
-						try {
-							Object newObj = f.get(current_object).getClass();
-							System.out.println("Inspected field '" + f.getName() + "' = " + f.get(current_object));
-							System.out.println("Current Object: " + newObj);
-							flagCommand = true;
-							current_object = newObj;
-							return;
-						} catch (IllegalArgumentException e) {
-							e.printStackTrace();
-						} catch (IllegalAccessException e) {
-							e.printStackTrace();
+					if (command[1].equals(f.getName())) {
+						Class<?> fieldType = f.getType();
+						boolean isPrimitive = false;
+						Object graphObject = graph.getCurrentObject();
+						Object newObj = f.get(graphObject).getClass();
+						System.err.println(newObj);
+						if (fieldType.isPrimitive()) {
+							isPrimitive = true;
 						}
+						System.err.println("Inspected field '" + f.getName()
+								+ "' = " + f.get(graphObject));
+						graph.insertInspectedNode(newObj, isPrimitive);
+			
+						return;
 					}
 				}
 				objectClass = objectClass.getSuperclass();
 			}
-			flagCommand = true;
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
 		}
 	}
 
-	public void commandQ(String[] command) {
-		if(command[0].equals("q")) {
-			System.out.println("Program exited");
-			System.exit(0);
-		}
-	}
-	/* Returns list (in string format) of all parameters of the method */
-	public List<String> getParameters(String[] command) {
-		List<String> parameters = new ArrayList<String>();
-		
-		/* parameters start in position number 2 */
-		for(int cmd = 2; cmd < command.length; cmd++) {
-			parameters.add(command[cmd]);
-		}
-		return parameters;
-	}
-	
-	/* Command c name value0 value1 ... valuen */
-	/* Obtain all methods of previous object looking first for the class's methods
-	 * and next to the superclass methods and so on */
-	public void commandC(String[] command) {
-		if(!command[0].toLowerCase().equals("c"))
+	/**
+	 * Command M - modify the fields of the inspected object
+	 * 
+	 * @param command
+	 */
+	public void commandM(String[] command) {
+
+		try {
+			String fieldName = command[1];
+			String newValue = command[2];
+
+			List<Field> classFields;
+			Field f = null;
+			Object obj = graph.getCurrentObject();
+			Class<?> objClass = obj.getClass();
+
+			classFields = getFieldsUpTo(objClass, Object.class);
+
+			for (Iterator<Field> iter = classFields.iterator(); iter.hasNext();) {
+				f = iter.next();
+				if (f.getName().equals(fieldName))
+					break;
+
+				if (!iter.hasNext()) {
+					System.err.println("No such field exists on the object");
+					return;
+				}
+			}
+
+			/**
+			 * Save against private or protected fields, making the parameter
+			 * accessible.
+			 */
+			f.setAccessible(true);
+
+			/**
+			 * Create an object of the same type as the parameter, converting from
+			 * a string, and catching the right exception that can be thrown when the
+			 * conversion reaches an invalid state.
+			 */
+
+			Object objValue = null;
+
+			objValue = types.getTypeValue(f.getType(), newValue);
+			f.set(obj, objValue);
+			System.err.println(Modifier.toString(f.getModifiers()) + " "
+					+ f.getType() + " " + f.getName() + " = " + f.get(obj));
+
+		} catch (NumberFormatException nfe) {
+			System.err.println("Invalid attribution.\n" + nfe.getMessage());
 			return;
-		
-		Class<?> objectClass = current_object.getClass();
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage() + "\nThe argument is not of the correct type.\nUsage:\n\t"
+					+ "For char type use \'<value>\'");
+			return;
+		} catch (IllegalAccessException e) {
+			System.err.println(e.getMessage());
+			return;
+		}
+
+	}
+
+	/**
+	 * Command C
+	 * 
+	 * @param command
+	 */
+	public void commandC(String[] command) {
+		Class<?> objectClass = graph.getCurrentObject().getClass();
 		Method[] declaredMethods = null;
+		List<Method> allMethods = new ArrayList<Method>();
 		List<Method> methods = new ArrayList<Method>();
 		List<String> parameters = getParameters(command);
 		Object result = null;
-		
+
 		do {
 			declaredMethods = objectClass.getDeclaredMethods();
 			methods.clear();
 			for (Method method : declaredMethods) {
 				methods.add(method);
 			}
-			methods = evaluateMethodsName(methods, command[1]);	
-			result = evaluateMethodsParam(methods, parameters.size(), parameters);
-			
-			objectClass = objectClass.getSuperclass();
-		}
-		while(!objectClass.equals(Object.class) && result == null);
+			methods = evaluateMethodsName(methods, command[1]);
+			result = evaluateMethodsParameters(methods, parameters.size(),
+					parameters);
+			allMethods.addAll(methods);
 
-		if(result == null) {
-			System.out.println("Metodo nao reconhecido, introduza novamente");
-		}
-		else {
-			returnResult(result);
-			
-		}
+			objectClass = objectClass.getSuperclass();
+
+		} while (!objectClass.equals(Object.class) && result == null);
+
+		returnResult(result, command[1], allMethods);
 	}
 	
-	/* print result value */
-	/* checks if result is an array */
-	/* cast (Object[])result nao possivel
-	 * NAO FUNCIONA PARA ARRAYS */
-	public void returnResult(Object result) {
-		if(result.getClass().isArray()) {
-			Object[] resultArray = (Object[])result;
-			for(int i = 0; i < resultArray.length; i++) {
-				System.out.println(resultArray[i]);
-			}
+	/**
+	 * Returns list (in string format) of all parameters provided by the user
+	 * @param command
+	 * @return list of parameters
+	 */
+	private List<String> getParameters(String[] command) {
+		List<String> parameters = new ArrayList<String>();
+
+		for (int cmd = 2; cmd < command.length; cmd++) {
+			parameters.add(command[cmd]);
 		}
-		else {
-			System.out.println("RESULT: " + result);
-		}
+		return parameters;
 	}
 	
-	/* Receives list of methods */
-	/* Obtain list with all methods with same name as methodName */
-	public List<Method> evaluateMethodsName(List<Method> methods, String methodName) {
+	/**
+	 * Filter methods by the name of provided methods
+	 * @param methods list of all declared methods of current_object
+	 * @param methodName
+	 * @return list with all methods with same name as methodName
+	 */
+	private List<Method> evaluateMethodsName(List<Method> methods,
+			String methodName) {
 		List<Method> bestMethods = new ArrayList<Method>();
-		
-		for(Method method : methods) {
-			if(method.getName().equals(methodName)) {
+
+		for (Method method : methods) {
+			if (method.getName().equals(methodName)) {
 				bestMethods.add(method);
 			}
 		}
 		return bestMethods;
 	}
-
-	/* Return list with methods that have the same number of parameters as the input */
-	/* paramNumber number of parameters provided by the user */
-	/* parameters: list of parameters provided by the user */
-	public Object evaluateMethodsParam(List<Method> methods, int paramNumber, List<String> parameters) {
+	
+	/**
+	 * Filter methods that have the same number of parameters as the parameters provided by the user
+	 * @param methods methods evaluated and accepted in previous evaluations
+	 * @param paramNumber number of parameters provided by the user
+	 * @param parameters list of parameters provided by the user
+	 * @return list with methods that have the same number of parameters
+	 */
+	private Object evaluateMethodsParameters(List<Method> methods, int paramNumber,
+			List<String> parameters) {
 		List<Method> bestMethods = new ArrayList<Method>();
 		Class<?>[] param = null;
 		Object result = null;
-		for(Method method : methods) {
+		for (Method method : methods) {
 			param = method.getParameterTypes();
-			if(param.length == paramNumber) {
+			if (param.length == paramNumber) {
 				bestMethods.add(method);
 				try {
 					result = methodMatchParamType(method, param, parameters);
-					if(result != null) {
+					if (result != null) {
 						return result;
 					}
-					
 				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
-					System.out.println("IllegalArgumentException");
 				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					//e.printStackTrace();
-					System.out.println("IllegalAccessException");
+					e.printStackTrace();
 				} catch (InvocationTargetException e) {
-					// TODO Auto-generated catch block
-					//e.printStackTrace();
-					System.out.println("InvocationTargetException");
+					e.printStackTrace();
 				}
 			}
 		}
-		
 		return null;
 	}
-	
-	
-	
-	
-	/* returns list that contains all methods with paramNumber as number of parameters */
-	/* Primitive types: boolean(0), byte(1), short(2), int(3), long(4), char(5), float(6) and double(7)
-	 * Reference types: java.lang.String(8), java.io.Serializable, java.lang.Integer, ARRAYS, all others
-	 * Types are represented as ints CRIAR MACROS NO INICIO DO FICHEIRO, unknown (-1)
-	 * LIMPAR EXCEPCOES
-	 */	
-	/* Returns a list containing each type of each parameter
-	 * Analyzes parameters provided by the user:
-	 *  - if begins and ends with "" is considered a string, example: "5", "true"
-	 *  - true or false are considered booleans
-	 *  - ending in L or l, is considered a long, but could be accepted as int, or double, or float,
-	 *  	example: 10L
-	 *  - ending in F or f, is considered a float, but could be accepted as int, or double or float,
-	 *  	example: 10f
-	 *  - ending in D or d, is considered a double, but could be accepted as int, or float
-	 *  	example: 10d
-	 */	
-	// ORGANIZAR ESTE CODIGO
-	public Object methodMatchParamType(Method method, Class<?>[] params, List<String> parameters) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+
+	/**
+	 * Filters methods by the type of parameters of method 
+	 * @param method methods evaluated and accepted in previous evaluations
+	 * @param params array of parameters of method
+	 * @param parameters list of parameters provided by the user
+	 * @return result of invoking the correct method if any, otherwise an exception is thrown
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 */
+	private Object methodMatchParamType(Method method, Class<?>[] params,
+			List<String> parameters) throws IllegalArgumentException,
+			IllegalAccessException, InvocationTargetException {
 		Object result = null;
 		Object[] args = parameters.toArray();
-		for(int param = 0; param < params.length; param++) {
-			// Type String
-			if(isString(params[param], parameters.get(param))) {
-				args[param] = (String)parameters.get(param).replace("\"", "");;
-			}
-			// Type char - nao funciona para por exemplo: \'\\u001\'...Solucao?
-			if(isChar(params[param], parameters.get(param))) {
-				args[param] = parameters.get(param).replace("\'", "").charAt(0);
-			}
-			// Type int
-			if(isInt(params[param])) {
-				args[param] = Integer.parseInt(parameters.get(param));
-			}
-			// Type boolean
-			if(isBoolean(params[param], parameters.get(param))) {
-				args[param] = isBooleanTrue(parameters.get(param));
-			}
-			// Type long
-			if(isLong(params[param], parameters.get(param))) {
-				args[param] = (long)Long.valueOf(parameters.get(param).toLowerCase().replace("l", "")).longValue();
-			}
-			// Type float
-			if(isFloat(params[param], parameters.get(param))) {
-				args[param] = Float.valueOf(parameters.get(param).toLowerCase().replace("f", "")).floatValue();
-			}
-			// Type double
-			if(isDouble(params[param], parameters.get(param))) {
-				args[param] = Double.valueOf(parameters.get(param).toLowerCase().replace("d", "")).doubleValue();
-			}
-			// Type byte
-			if(isByte(params[param])) {
-				args[param] = Byte.valueOf(parameters.get(param));
-			}
-			// Type short
-			if(isShort(params[param])) {
-				args[param] = Short.parseShort(parameters.get(param));
-			}
+		for (int param = 0; param < params.length; param++) {
+			args[param] = evaluateType(params[param], parameters.get(param));
 		}
 		method.setAccessible(true);
-		result = method.invoke(current_object, args);
-		
+		result = method.invoke(graph.getCurrentObject(), args);
 		return result;
 	}
-	
-	/** Checks if paramType is of class String and if starts and ends with quotation marks */
-	public boolean isString(Class<?> paramType, String parameter) {
-		if(paramType.equals(String.class) && 
-		   parameter.startsWith("\"") && 
-		   parameter.endsWith("\"")) {
+
+	/**
+	 * Evaluates:
+	 * 	- if a parameter is a previous saved object by the user,
+	 * 	  that is being used as a parameter;
+	 * 	- if paramType is an int array (special case)
+	 * 	  or any of the other supported types.
+	 * @param paramType type of parameter
+	 * @param parameter parameter provided by the user
+	 * @return parameter converted to paramType type
+	 */
+	private Object evaluateType(Class<?> paramType, String parameter) {
+		if(savedObjects.containsKey(parameter)) {
+			return savedObjects.get(parameter);
+		}
+		if (paramType.isArray()) {
+			return evaluateIntArray(paramType, parameter);
+		}
+		return types.getTypeValue(paramType, parameter);
+	}
+
+	/**
+	 * @param paramType type of parameter
+	 * @param parameter parameter provided by the user
+	 * @return parameter converted to an int array
+	 */
+	private Object evaluateIntArray(Class<?> paramType, String parameter) {
+		String[] array = null;
+		String arrayElements = "";
+		int[] result;
+
+		if (isIntArray(paramType, parameter)) {
+			arrayElements = parameter.substring(1, parameter.length() - 1);
+			array = arrayElements.split(",");
+			result = new int[array.length];
+			for (int i = 0; i < array.length; i++) {
+				result[i] = (Integer) types.getTypeValue(
+						paramType.getComponentType(), array[i]);
+			}
+			return result;
+		}
+		return null;
+	}
+
+	/**
+	 * @param paramType type of parameter
+	 * @param parameter parameter provided by the user
+	 * @return true if paramType if an int array, false otherwise
+	 */
+	private boolean isIntArray(Class<?> paramType, String parameter) {
+		if (paramType.isArray() && parameter.startsWith("{")
+				&& parameter.endsWith("}")
+				&& paramType.getComponentType().equals(int.class)) {
 			return true;
 		}
 		return false;
 	}
 	
-	/** Checks if paramType is of class char and if starts and ends with ' */
-	public boolean isChar(Class<?> paramType, String parameter) {
-		if(paramType.equals(char.class) && 
-		   parameter.startsWith("\'") && 
-		   parameter.endsWith("\'")) {
-			return true;
+	/**
+	 * Prints result of invoking method
+	 * @param result
+	 */
+	private void returnResult(Object result, String method, List<Method> methods) {
+		if (result == null) {
+			System.err.println("No match found for method " + method);
+			if (methods.size() > 0) {
+				System.err.println("Maybe you mean: ");
+				for (int methodIndex = 0; methodIndex < methods.size(); methodIndex++) {
+					System.err.println("\t" + methods.get(methodIndex));
+				}
+			}
+		} else {
+			System.err.println(result);
 		}
-		return false;
 	}
 	
-	/* Returns true if paramType is of class int */
-	public boolean isInt(Class<?> paramType) {
-		if(paramType.equals(int.class))
-			return true;
-		return false;
+	/**
+	 * Prints information about available commands
+	 */
+	/**
+	 * @param command
+	 */
+	public void commandH(String[] command) {
+		System.err.println("Available Commands:");
+		System.err.println("\t- q: Terminates inspection");
+		System.err
+				.println("\t- i name: Inspects the value of the field named name");
+		System.err
+				.println("\t- m name value: Modifies the value of the field named name");
+		System.err
+				.println("\t- c name value0 value1 ... valuen: Calls the method named name");
+		System.err
+				.println("\t- next: Allows to move forward in the graph of inspected objects");
+		System.err
+				.println("\t- previous: Allows to move backward in the graph of inspected objects");
+		System.err
+				.println("\t- listall: Shows all objects in the graph of inspected objects");
+		System.err.println("\t- current: Shows the current inspected object");
+		System.err.println("\t- save: Save the current inspected object");
+		System.err.println("\t- showsaved: Shows all user saved objects");
+		System.err.println("\t- h: Help information");
 	}
 	
-	/* Returns true if paramType is of class boolean and parameter is true or false */
-	public boolean isBoolean(Class<?> paramType, String parameter) {
-		if(paramType.equals(boolean.class) && 
-		  (parameter.toLowerCase().equals("true") 
-		   || parameter.toLowerCase().equals("false")))
-			return true;
-		return false;
+	/**
+	 * @param command
+	 */
+	public void commandNext(String[] command) {
+		graph.listNext();
 	}
-	
-	/* Returns true if has value true, false otherwise */
-	public boolean isBooleanTrue(String parameter) {
-		if(parameter.toLowerCase().equals("true"))
-			return true;
-		return false;
+
+	/**
+	 * @param command
+	 */
+	public void commandPrevious(String[] command) {
+		graph.previous();
 	}
-	
-	/* Returns true if paramType is of type long and if parameter ends with l or L */
-	public boolean isLong(Class<?> paramType, String parameter) {
-		if(paramType.equals(long.class) || parameter.toLowerCase().endsWith("l"))
-			return true;
-		return false;
+
+	/**
+	 * @param command
+	 */
+	public void commandListAll(String[] command) {
+		graph.printGraph();
 	}
-	
-	/* Returns true if paramType is of type long and if parameter ends with l or L */
-	public boolean isFloat(Class<?> paramType, String parameter) {
-		if(paramType.equals(float.class) || parameter.toLowerCase().endsWith("f"))
-			return true;
-		return false;
+
+	/**
+	 * @param command
+	 */
+	public void commandCurrent(String[] command) {
+		graph.printCurrent();
 	}
-	
-	/* Returns true if paramType is of type long and if parameter ends with l or L */
-	public boolean isDouble(Class<?> paramType, String parameter) {
-		if(paramType.equals(double.class) || parameter.toLowerCase().endsWith("d"))
-			return true;
-		return false;
+
+	/**
+	 * @param command
+	 */
+	public void commandSave(String[] command) {
+		try {
+			String name = command[1];
+			Object curr = graph.getCurrentObject();
+			savedObjects.put(name, curr);
+		} catch (IndexOutOfBoundsException e) {
+			System.err
+					.println("Please provide a name for the object you are trying to save");
+			return;
+		}
 	}
-	
-	/* Returns true if paramType is of class int */
-	public boolean isByte(Class<?> paramType) {
-		if(paramType.equals(byte.class))
-			return true;
-		return false;
+
+	/**
+	 * @param command
+	 */
+	public void commandShowSaved(String[] command) {
+		System.err.println("-------- Saved Objects --------");
+		for(String s : savedObjects.keySet())
+			System.err.println(s + " " + savedObjects.get(s));	
 	}
-	
-	/* Returns true if paramType is of class int */
-	public boolean isShort(Class<?> paramType) {
-		if(paramType.equals(short.class))
-			return true;
-		return false;
-	}
-	
-	/* returns true if list methods only contains one method, false otherwise */
-	public boolean isMethodUnique(List<Method> methods) {
-		if(methods.size() == 1)
-			return true;
-		return false;
-	}	
 }

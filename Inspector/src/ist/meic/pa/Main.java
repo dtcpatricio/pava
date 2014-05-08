@@ -4,12 +4,12 @@ public class Main {
 
 	public static void main(String[] args) {
 		Inspector is = new Inspector();
-
+		
 		a.E teste = new a.E(); 
+		a.B object2 = new a.B();
 		
 		is.inspect(teste);
-		/* Sera que o comando q permitir a classe continuar a execucao? */
-		System.out.println("AFTER EXECUTION OF INSPECT");
+		is.inspect(object2);
 	}
 	// Branch susana
 
