@@ -15,6 +15,11 @@ public class TraceVM {
 			Loader classLoader = new Loader();
 			classLoader.addTranslator(pool, translator);
 			
+			Class rt = classLoader.loadClass("ist.meic.pa.IdentityTracer");
+			//Instantiate Foo
+			Object foo = rt.newInstance();
+
+			
 			// TODO Trace must print information before calling Test0
 			
 			// TODO: ist.meic.pa.Test.Test0 must be received as argument

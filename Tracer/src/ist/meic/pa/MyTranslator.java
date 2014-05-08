@@ -13,14 +13,16 @@ import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
 public class MyTranslator implements Translator {
+	
 	@Override
 	public void onLoad(ClassPool pool, String className) throws NotFoundException,
 			CannotCompileException {
 		CtClass ctClass = pool.get(className);
 		//constructorCall(ctClass);
-	  if(className.equals("ist.meic.pa.Test.Test")) {
+
+		if(className.equals("ist.meic.pa.Test.Test0")) {
 			newTrace(ctClass);
-			methodTrace(ctClass);
+			//methodTrace(ctClass);
 		/*	
 			System.out.println("Class name = " + className);
 			if(className.equals("ist.meic.pa.Test.Test")) {
@@ -85,20 +87,20 @@ public class MyTranslator implements Translator {
 	}
 	
 	void newTrace(CtClass ctClass) throws CannotCompileException {
+		final String template = 
+				"{" +
+				" $_ = $proceed($$); " +
+				" System.err.println(\"New trace \" + $_); " + 
+				" ist.meic.pa.IdentityTracer.addConstructor($_,\"%s\",\"%d\",\"%s\");" + 
+				"}";
 		for(final CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 			ctMethod.instrument(new ExprEditor() {
 				public void edit(NewExpr ne) 
 					throws CannotCompileException {
 					try {
-							// TODO: Insert after in NewExpr ne
-							/*ctMethod.insertAfter("iden.addInspectedObject(System.identityHashCode($_), $_); "
-									+ "System.out.println(Thread.currentThread().getStackTrace()[1].getLineNumber());"); */
-						
-						
-						System.err.println("'New' Line: " + ne.getLineNumber() +
-								" Function calling: " + ne.where().getName()  
-								+ " Constructor name: " + ne.getConstructor().getLongName());
-					
+						System.err.println("New called:" + ne.getLineNumber());
+						ne.replace(String.format(template, ne.getConstructor().getLongName(),
+								ne.getLineNumber(), ne.getFileName()));
 					} catch (NotFoundException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
