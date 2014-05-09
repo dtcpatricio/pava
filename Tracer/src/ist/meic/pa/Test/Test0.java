@@ -12,16 +12,7 @@ public class Test0 {
 class Test {
 
 	public Object foo() {
-		String s = new String("Foo");
-		return s;
-	}
-
-	public Object foo2(Object o) {
-		return o;
-	}
-
-	public void foo3(int dx, int dy) {
-		return;
+		return new String("Foo");
 	}
 
 	public Object bar() {
@@ -33,10 +24,7 @@ class Test {
 	}
 
 	public void test() {
-		Object o = foo();
-
-		Trace.print(o);
-
+		Trace.print(foo());
 		Object b = bar();
 		Trace.print(identity(b));
 	}

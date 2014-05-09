@@ -1,23 +1,16 @@
 package ist.meic.pa;
 
-public class TraceConstructor {
+// Responsible for storing information about the creation of an instance
+public class TraceConstructor extends TraceInformation {
 
-	private String name;
-	private String line;
-	private String file;
-	
 	public TraceConstructor(String name, String line, String file) {
-		this.name = name;
-		this.line = line;
-		this.file = file;
+		setName(name);
+		setLine(line);
+		setFile(file);
 	}
-
-	public String getName() { return name; }
-	public String getLine() { return line; }
-	public String getFile() { return file; }
 	
 	@Override
 	public String toString() {
-		return "<- " + name + " on " + file + ":" + line;
+		return "<- " + super.toString();
 	}
 }
