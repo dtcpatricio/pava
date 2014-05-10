@@ -4,6 +4,8 @@ import ist.meic.pa.Trace;
 
 public class Test2 {
 	
+	Integer i;
+	
 	public Object foo() {
 		String s = new String("Foo");
 		return s;
@@ -14,8 +16,8 @@ public class Test2 {
 	}
 	
 	public void test() {
-		String p = new String("paulo sucka pilas");
-		bar(p);
+		String p = new String("Bars");
+		//i = 3;
 		Trace.print(p);
 	}
 }
