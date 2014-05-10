@@ -1,8 +1,11 @@
 package ist.meic.pa;
 
+import java.lang.reflect.Constructor;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
@@ -56,9 +59,9 @@ public class TracerTranslator implements Translator {
 	// TODO: falta iterar por todos os campos
 	public void Trace(CtClass ctClass) throws CannotCompileException, NotFoundException {
 		for(final CtMethod ctMethod : ctClass.getDeclaredMethods()) {
-			NewExprTracer(ctMethod);
-			//FieldAccessTracer(ctMethod);
-			MethodCallTracer(ctMethod);
+			//NewExprTracer(ctMethod);
+			FieldAccessTracer(ctMethod);
+			//MethodCallTracer(ctMethod);
 		}		
 	}	
 
@@ -68,12 +71,25 @@ public class TracerTranslator implements Translator {
 			public void edit(FieldAccess fieldAccess) 
 					throws CannotCompileException {
 				if(fieldAccess.isWriter()) {
+					try {
+						for(CtConstructor c : fieldAccess.getField().getType().getConstructors()) {
+							System.err.println("Constructor: " + c.getLongName());
+						}
+						
+					} catch (NotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+						System.err.println("NOOOO");
+					for(Constructor c : fieldAccess.getClass().getConstructors()) {
+						System.err.println("Constructor: " + c.getName());
+					}
 					System.err.println("Class: " + fieldAccess.toString() +
 									   " Line: " + fieldAccess.getLineNumber() + 
 									   " File: " + fieldAccess.getFileName());
 					fieldAccess.replace(String.format(
 							constructorTemplate, 
-							fieldAccess.toString(),
+							fieldAccess.getClassName(),
 							fieldAccess.getLineNumber(), 
 							fieldAccess.getFileName()));
 				}

@@ -5,5 +5,7 @@ public class Trace {
 	public static void print(Object object) {
 		System.err.println("Tracing for " + object);
 		ObjectTracer.printObject(object);
+		System.err.println("TODOS OS OBJECTOS");
+		ObjectTracer.printObjectsMap();
 	}
 }

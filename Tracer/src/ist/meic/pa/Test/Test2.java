@@ -17,7 +17,7 @@ public class Test2 {
 	
 	public void test() {
 		String p = new String("Bars");
-		//i = 3;
-		Trace.print(p);
+		i = 2;
+		Trace.print(i);
 	}
 }
