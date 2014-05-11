@@ -24,7 +24,6 @@ public class TraceMethod extends TraceInformation {
 			result += "-> ";
 		else
 			result += "<- ";
-		
 		return result + super.toString();
 	}
 }

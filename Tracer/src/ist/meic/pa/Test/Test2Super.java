@@ -1,8 +1,10 @@
 package ist.meic.pa.Test;
 
 public class Test2Super {
-	static Integer i = new Integer(3);
+	String teste = "ola";
 	
-	static public void susana() {
+	
+	public String a(String b) {
+		return teste;
 	}
 }

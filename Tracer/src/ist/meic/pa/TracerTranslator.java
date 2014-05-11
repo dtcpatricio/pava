@@ -1,7 +1,5 @@
 package ist.meic.pa;
 
-import java.lang.reflect.Constructor;
-
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -10,6 +8,7 @@ import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import javassist.Translator;
+import javassist.expr.ConstructorCall;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
 import javassist.expr.MethodCall;
@@ -23,29 +22,23 @@ public class TracerTranslator implements Translator {
 	private final String constructorTemplate = 
 			"{" +
 					"	$_ = $proceed($$); " +
-					"	ist.meic.pa.ObjectTracer.addObject($_).setConstructor(" +
-					"		\"%s\", \"%s\", \"%s\");" +
+					"	ist.meic.pa.ObjectTracer.validateAndAddObject(($w)$_, $args, \"%s\", \"%s\", \"%s\");" +
 					"}";
 
 	// TODO: Maybe use addMethod here
-	private final String methodReturnTemplate = 
+	private final String methodTemplate = 
 			"{" + 
-					"if($args != null) { " +
-					"	ist.meic.pa.ObjectTracer.addArgumentsMethod($args, \"%s\", \"%s\", \"%s\");}" + 
-					"" +
+					"	ist.meic.pa.ObjectTracer.addArgumentsMethod($args, \"%s\", \"%s\", \"%s\");" +
 					"	$_ = $proceed($$); " +
-					"	if($_ != null) {" +
-					"		ist.meic.pa.ObjectTracer.getTraceObject($_).addMethod(" +
-					"			%s, \"%s\", \"%s\", \"%s\"); }" +
+					"	ist.meic.pa.ObjectTracer.addReturnMethod($_, \"%s\", \"%s\", \"%s\");" +
 					"}";
 
 	@Override
 	public void onLoad(ClassPool pool, String className) throws NotFoundException,
 	CannotCompileException {
-		CtClass ctClass = pool.get(className);
-
-		// TODO confirmar que não é uma classe pertencente ao nosso programa
-		if(className.equals("ist.meic.pa.Test.Test2")) {
+		if(TraceVM.isClassValid(className))  {
+			CtClass ctClass = pool.get(className);
+			TraceVM.addClientClass(className);
 			Trace(ctClass);
 		}
 	}
@@ -56,46 +49,13 @@ public class TracerTranslator implements Translator {
 		// TODO Auto-generated method stub
 	}
 
-	// TODO: falta iterar por todos os campos
 	public void Trace(CtClass ctClass) throws CannotCompileException, NotFoundException {
 		for(final CtMethod ctMethod : ctClass.getDeclaredMethods()) {
-			//NewExprTracer(ctMethod);
+			NewExprTracer(ctMethod);
 			FieldAccessTracer(ctMethod);
-			//MethodCallTracer(ctMethod);
-		}		
+			MethodCallTracer(ctMethod);
+		}
 	}	
-
-	// PROBLEM: object added hasn't a reference, because $_ only returns for instance 3 in int i = 3
-	public void FieldAccessTracer(CtMethod ctMethod) throws CannotCompileException {
-		ctMethod.instrument(new ExprEditor() {
-			public void edit(FieldAccess fieldAccess) 
-					throws CannotCompileException {
-				if(fieldAccess.isWriter()) {
-					try {
-						for(CtConstructor c : fieldAccess.getField().getType().getConstructors()) {
-							System.err.println("Constructor: " + c.getLongName());
-						}
-						
-					} catch (NotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-						System.err.println("NOOOO");
-					for(Constructor c : fieldAccess.getClass().getConstructors()) {
-						System.err.println("Constructor: " + c.getName());
-					}
-					System.err.println("Class: " + fieldAccess.toString() +
-									   " Line: " + fieldAccess.getLineNumber() + 
-									   " File: " + fieldAccess.getFileName());
-					fieldAccess.replace(String.format(
-							constructorTemplate, 
-							fieldAccess.getClassName(),
-							fieldAccess.getLineNumber(), 
-							fieldAccess.getFileName()));
-				}
-			}
-		});
-	}
 
 	// For new expressions
 	public void NewExprTracer(CtMethod ctMethod) throws CannotCompileException {
@@ -104,10 +64,37 @@ public class TracerTranslator implements Translator {
 					throws CannotCompileException {
 				try {
 					newExpr.replace(String.format(
-							constructorTemplate, 
+							constructorTemplate,
 							newExpr.getConstructor().getLongName(),
 							newExpr.getLineNumber(), 
 							newExpr.getFileName()));
+				} catch (NotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	public void FieldAccessTracer(CtMethod ctMethod) throws CannotCompileException {
+		ctMethod.instrument(new ExprEditor() {
+			public void edit(FieldAccess fieldAccess) 
+					throws CannotCompileException {
+				try {
+					if(!fieldAccess.getField().getType().isPrimitive() &&
+					  (fieldAccess.isWriter() || fieldAccess.isReader())) {
+						CtConstructor constructor = null; //Should never be null
+						for(CtConstructor cc : fieldAccess.getField().getType().getConstructors()) {
+							if(cc.getParameterTypes().length == 1) {
+								constructor = cc;
+								break;
+							}
+						}
+						fieldAccess.replace(String.format(
+								constructorTemplate,								
+								constructor.getLongName(),
+								fieldAccess.getLineNumber(), 
+								fieldAccess.getFileName()));
+					}
 				} catch (NotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -116,26 +103,24 @@ public class TracerTranslator implements Translator {
 		});
 	}
 
+	// TODO: No enunciado: The arrow -> indicates that the object was provided as argument to
+	// a constructor or method call
+	// ConstructorCall
 	public void MethodCallTracer(final CtMethod ctMethod) throws CannotCompileException {		
 		ctMethod.instrument(new ExprEditor() {
 			public void edit(MethodCall methodCall) 
 					throws CannotCompileException {
-				// Shouldn't be like this, just for testing
-				// Don't want to evaluate our classes
-				if(!(methodCall.getClassName().contains("ist.meic.pa.ObjectTracer") ||
-						methodCall.getClassName().contains("ist.meic.pa.TraceObject"))) {
+				if(TraceVM.isClientClass(methodCall.getClassName())) {
 					try {
 						// TODO: get method name with enclosing class
-						methodCall.replace(String.format(methodReturnTemplate,
+						methodCall.replace(String.format(methodTemplate,
 								methodCall.getMethod().getLongName(),
 								methodCall.getLineNumber(), 
 								methodCall.getFileName(),
-								"false",
 								methodCall.getMethod().getLongName(),
 								methodCall.getLineNumber(), 
 								methodCall.getFileName()));
 					} catch (NotFoundException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
