@@ -1,7 +1,7 @@
 package ist.meic.pa;
 
-// All information necessary to store from a object implements this class
 public abstract class TraceInformation {
+
 	private String name;
 	private String line;
 	private String file;

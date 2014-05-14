@@ -6,6 +6,7 @@ public class TraceMethod extends TraceInformation {
 	
 	/**
 	 * @param argument true if the object is passed as argument, false if it's returned
+	 * from a method
 	 * @param name
 	 * @param line
 	 * @param file

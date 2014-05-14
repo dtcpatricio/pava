@@ -1,6 +1,25 @@
 package ist.meic.pa.Test;
 
 import ist.meic.pa.Trace;
+class Test {
+	public Object foo() {
+		return new String("Foo");
+	}
+
+	public Object bar() {
+		return foo();
+	}
+	
+	public Object baz() {
+		return bar();
+	}
+
+	public void test() {
+		Trace.print(foo());
+		Trace.print(bar());
+		Trace.print(baz());
+	}
+}
 
 public class Test0 {
 
@@ -8,26 +27,3 @@ public class Test0 {
 		(new Test()).test();
 	}
 }
-
-class Test {
-
-	public Object foo() {
-		return new String("Foo");
-	}
-
-	public Object bar() {
-		return new String("Bar");
-	}
-
-	public Object identity(Object o) {
-		return o;
-	}
-
-	public void test() {
-		Trace.print(foo());
-		Object b = bar();
-		Trace.print(identity(b));
-	}
-}
-
-
