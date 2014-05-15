@@ -2,6 +2,7 @@ package ist.meic.pa.Test;
 
 import ist.meic.pa.Trace;
 class Test {
+	Integer i;
 	public Object foo() {
 		return new String("Foo");
 	}
@@ -13,11 +14,12 @@ class Test {
 	public Object baz() {
 		return bar();
 	}
-
+	
 	public void test() {
-		Trace.print(foo());
-		Trace.print(bar());
-		Trace.print(baz());
+		Test0Test t = new Test0Test();
+		t.methodtest();
+		
+		Trace.print(t);
 	}
 }
 

@@ -3,7 +3,7 @@ package ist.meic.pa;
 public class Trace {
 
 	public static void print(Object object) {
-		if(ObjectTracer.hasTraceObject(object)) {
+		if(ObjectTracer.hasObject(object)) {
 			System.err.println("Tracing for " + object.toString());
 			ObjectTracer.printTraceObject(object);
 		} 

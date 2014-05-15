@@ -8,13 +8,8 @@ public class ObjectTracer {
 
 	public static void newObject(Object object, Object[] arguments,
 			String name, String line, String file) {
-		if(object == null) {
-			addField(arguments[0], name, line, file);
-		}
-		else {
-			addObject(object, name, line, file);
-			addArgumentsMethod(arguments, name, line, file);
-		}
+		addObject(object, name, line, file);
+		addArgumentsMethod(arguments, name, line, file);
 	}
 
 	public static void addObject(Object object, String constructor_name, 
@@ -26,27 +21,7 @@ public class ObjectTracer {
 		}
 	}
 
-	public static void addField(Object argument, String name, String line, String file) {
-		if(hasFieldName(name)) {
-			Object o = getFieldName(name);
-			TraceObject f = getTraceObject(o);
-			objectsMap.remove(o);
-			f.addMethod(true, name, line, file);
-			objectsMap.put(argument, f);
-		}
-		else {
-			if(!objectsMap.containsKey(argument)) {
-				TraceObject f = new TraceObject();
-				f.setField(true);
-				f.setFieldName(name);
-				f.addMethod(true, name, line, file);
-				objectsMap.put(argument, f);
-			}
-			else {
-				getTraceObject(argument).addMethod(true, name, line, file);
-			}
-		}
-	}
+
 
 	public static void addArgumentsMethod(Object[] arguments, String name, String line, String file) {
 		if(!isObjectNull(arguments)) {
@@ -59,37 +34,39 @@ public class ObjectTracer {
 	}
 
 	public static void addReturnMethod(Object object, String name, String line, String file) {
-		if(!isObjectNull(object) && hasTraceObject(object)) {
+		if(!isObjectNull(object) && hasObject(object)) {
 			getTraceObject(object).addMethod(false, name, line, file);
-		}			
-	}
-
-	public static boolean hasFieldName(String name) {
-		for(TraceObject to : objectsMap.values()) {
-			if(to.getFieldName().equals(name)) {
-				return true;
-			}
 		}
-		return false;
 	}
 
-	public static Object getFieldName(String name) {
-		for(Object o : objectsMap.keySet()) {
-			if(objectsMap.get(o).getFieldName().equals(name)) {
-				return o;
+	public static void addField(Object object, Object field, Object[] arguments, boolean argument,
+			String name, String line, String file) {
+		String field_name = "";
+		if(hasObject(object)) {
+			if(argument) {
+				field_name += name + " = " + arguments[0].toString();
+				getTraceObject(object).addField(arguments[0], argument, 
+					field_name, line, file);
 			}
+			else {
+				field_name += name + " = " + field.toString();
+				getTraceObject(object).addField(field, argument, 
+						field_name, line, file);
+			}
+			
 		}
-		return null;
+		else
+			return;
 	}
 
-	public static boolean hasTraceObject(Object object) {
+	public static boolean hasObject(Object object) {
 		if(objectsMap.containsKey(object))
 			return true;
 		return false;
 	}
 
 	public static TraceObject getTraceObject(Object object) {
-		if(hasTraceObject(object))
+		if(hasObject(object))
 			return objectsMap.get(object);
 		return null;
 	}

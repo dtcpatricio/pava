@@ -26,6 +26,12 @@ public class TraceTranslator implements Translator {
 					"	ist.meic.pa.ObjectTracer.addReturnMethod($_, \"%s\", \"%s\", \"%s\");" +
 					"}";
 
+	private final String fieldTemplate = 
+			"{" +
+					"	$_ = $proceed($$); " +
+					"	ist.meic.pa.ObjectTracer.addField($0, $_, $args, %s, \"%s\", \"%s\", \"%s\");" +
+					"}";
+
 	@Override
 	public void onLoad(ClassPool pool, String className) throws NotFoundException,
 	CannotCompileException {
@@ -43,40 +49,40 @@ public class TraceTranslator implements Translator {
 
 	public void Trace(CtClass ctClass) throws CannotCompileException, NotFoundException {
 		for(final CtMethod ctMethod : ctClass.getDeclaredMethods()) {
-			if(TraceVMImplementation.isExtended())
-				FieldAccessTracer(ctMethod);
 			NewExprTracer(ctMethod);
 			MethodCallTracer(ctMethod);
+			if(TraceVMImplementation.isExtended())
+				FieldAccessTracer(ctMethod);
 		}
 	}	
 
-	public void FieldAccessTracer(CtMethod ctMethod) throws CannotCompileException {
+	public void FieldAccessTracer(final CtMethod ctMethod) throws CannotCompileException {
 		ctMethod.instrument(new ExprEditor() {
 			public void edit(FieldAccess fieldAccess) 
 					throws CannotCompileException {
-				if(TraceVMImplementation.isClientClass(fieldAccess.getClassName())) {
-					try {
+				try {
+					if(TraceVMImplementation.isClassValid(fieldAccess.getClassName())) {
 						if(!fieldAccess.getField().getType().isPrimitive()) {
 							if(fieldAccess.isWriter()) {
 								fieldAccess.replace(String.format(
-										objectTemplate,
+										fieldTemplate,
+										"true",
 										fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
 										fieldAccess.getLineNumber(), 
 										fieldAccess.getFileName()));
 							}
-							else {
-								if(fieldAccess.isReader()) {
-									fieldAccess.replace(String.format(
-											objectTemplate,
-											fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
-											fieldAccess.getLineNumber(), 
-											fieldAccess.getFileName()));
-								}
+							if(fieldAccess.isReader()) {
+								fieldAccess.replace(String.format(
+										fieldTemplate,
+										"false",
+										fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
+										fieldAccess.getLineNumber(), 
+										fieldAccess.getFileName()));
 							}
 						}
-					} catch (NotFoundException e) {
-						e.printStackTrace();
 					}
+				} catch (NotFoundException e) {
+					e.printStackTrace();
 				}
 			}
 		});

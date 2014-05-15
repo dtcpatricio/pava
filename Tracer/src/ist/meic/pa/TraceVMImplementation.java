@@ -24,6 +24,7 @@ public class TraceVMImplementation {
 	private static final String[] classes = new String[] {
 		package_name + ".ObjectTracer",
 		package_name + ".TraceConstructor",
+		package_name + ".TraceFieldAccess",
 		package_name + ".TraceInformation",
 		package_name + ".TraceMethod",
 		package_name + ".TraceObject",
@@ -86,5 +87,13 @@ public class TraceVMImplementation {
 
 	public static void setExtended(boolean extended) {
 		TraceVMImplementation.extended = extended;
+	}
+	
+	public static void printClientClasses() {
+		System.err.println("--------------------CLASSES---------------------");
+		for(String c : clientClasses) {
+			System.err.println("Client Classes: " + c);
+		}
+		System.err.println("--------------------CLASSES---------------------");
 	}
 }
