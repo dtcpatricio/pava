@@ -2,13 +2,14 @@ package ist.meic.pa;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.Loader;
-import javassist.NotFoundException;
 import javassist.Translator;
 
+/**
+ * TraceVMImplementation:
+ * 	Class responsible for the bytecode transformation
+ */
 public class TraceVMImplementation {
 
 	private static final String package_name = "ist.meic.pa";
@@ -24,7 +25,7 @@ public class TraceVMImplementation {
 	private static final String[] classes = new String[] {
 		package_name + ".ObjectTracer",
 		package_name + ".TraceConstructor",
-		package_name + ".TraceFieldAccess",
+		package_name + ".TraceField",
 		package_name + ".TraceInformation",
 		package_name + ".TraceMethod",
 		package_name + ".TraceObject",
@@ -35,28 +36,28 @@ public class TraceVMImplementation {
 
 	private static List<String> clientClasses = new ArrayList<String>();
 
-	public static void loadTracerClasses(Loader classLoader) throws Throwable {
-		classLoader.loadClass(object_tracer).newInstance();
-		classLoader.loadClass(trace_vm).newInstance();
-		addClientClass(trace);
-	}
-	
 	public static void initializeTracer(String[] args, boolean extended) 
 			throws Throwable {
 		if(args.length != 1) {
-			System.err.println("Tracer: Please insert one class.");
+			System.err.println("Tracer for Java: Please insert one class.");
 			return;
 		}
 		Translator translator = new TraceTranslator();
 		ClassPool pool = ClassPool.getDefault();
 		Loader classLoader = new Loader();
 		classLoader.addTranslator(pool, translator);
-		
+
 		loadTracerClasses(classLoader);
 		setExtended(extended);
-		
+
 		addClientClass(args[0]);
 		classLoader.run(args[0], null);
+	}
+	
+	public static void loadTracerClasses(Loader classLoader) throws Throwable {
+		classLoader.loadClass(object_tracer).newInstance();
+		classLoader.loadClass(trace_vm).newInstance();
+		addClientClass(trace);
 	}
 
 	public static boolean isClassValid(String className) {
@@ -87,13 +88,5 @@ public class TraceVMImplementation {
 
 	public static void setExtended(boolean extended) {
 		TraceVMImplementation.extended = extended;
-	}
-	
-	public static void printClientClasses() {
-		System.err.println("--------------------CLASSES---------------------");
-		for(String c : clientClasses) {
-			System.err.println("Client Classes: " + c);
-		}
-		System.err.println("--------------------CLASSES---------------------");
 	}
 }

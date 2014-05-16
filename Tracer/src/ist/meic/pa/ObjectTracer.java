@@ -2,9 +2,18 @@ package ist.meic.pa;
 
 import java.util.IdentityHashMap;
 
+/**
+ * ObjectTracer:
+ * 	Responsible for storing all objects in an IdentityHashMap
+ *  Each object in objectsMap has as value a TraceObject
+ */
 public class ObjectTracer {
 
-	private static IdentityHashMap<Object, TraceObject> objectsMap = new IdentityHashMap<Object, TraceObject>();
+	private static IdentityHashMap<Object, TraceObject> objectsMap;
+
+	public ObjectTracer() {
+		objectsMap = new IdentityHashMap<Object, TraceObject>();
+	}
 
 	public static void newObject(Object object, Object[] arguments,
 			String name, String line, String file) {
@@ -20,8 +29,6 @@ public class ObjectTracer {
 			objectsMap.put(object, to);
 		}
 	}
-
-
 
 	public static void addArgumentsMethod(Object[] arguments, String name, String line, String file) {
 		if(!isObjectNull(arguments)) {
@@ -46,17 +53,15 @@ public class ObjectTracer {
 			if(argument) {
 				field_name += name + " = " + arguments[0].toString();
 				getTraceObject(object).addField(arguments[0], argument, 
-					field_name, line, file);
+						field_name, line, file);
 			}
 			else {
 				field_name += name + " = " + field.toString();
 				getTraceObject(object).addField(field, argument, 
 						field_name, line, file);
 			}
-			
 		}
-		else
-			return;
+		return;
 	}
 
 	public static boolean hasObject(Object object) {

@@ -2,24 +2,22 @@ package ist.meic.pa.Test;
 
 import ist.meic.pa.Trace;
 class Test {
-	Integer i;
 	public Object foo() {
 		return new String("Foo");
 	}
 
 	public Object bar() {
-		return foo();
+		return new String("Bar");
 	}
 	
-	public Object baz() {
-		return bar();
+	public Object identity(Object o) {
+		return o;
 	}
 	
 	public void test() {
-		Test0Test t = new Test0Test();
-		t.methodtest();
-		
-		Trace.print(t);
+		Trace.print(foo());
+		Object b = bar();
+		Trace.print(identity(b));
 	}
 }
 

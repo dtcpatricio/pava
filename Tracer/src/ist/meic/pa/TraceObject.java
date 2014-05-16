@@ -4,15 +4,23 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 
+/**
+ * TraceObject:
+ * 	Class that stores all relevant information about an object, such as:
+ *    - its constructor
+ *    - the method calls where the object was passed as argument, or returned
+ *      by one
+ *    - the list of fields that a object accesses 
+ */
 public class TraceObject {
 
 	private TraceConstructor constructor;
 	private List<TraceMethod> methodCalls;
-	private IdentityHashMap<Object, TraceFieldAccess> fieldsMap;
+	private IdentityHashMap<Object, TraceField> fieldsMap;
 
 	public TraceObject() {
 		methodCalls = new ArrayList<TraceMethod>();
-		fieldsMap = new IdentityHashMap<Object, TraceFieldAccess>();
+		fieldsMap = new IdentityHashMap<Object, TraceField>();
 	}
 
 	public TraceConstructor getConstructor() { return constructor; }
@@ -36,7 +44,7 @@ public class TraceObject {
 
 	public void newField(Object field, boolean argument, String name, String line, String file) {
 		if(!fieldsMap.containsKey(field)) {
-			TraceFieldAccess fa = new TraceFieldAccess();
+			TraceField fa = new TraceField();
 			fa.addFieldAccess(argument, name, line, file);
 			fieldsMap.put(field, fa);
 		}
@@ -48,7 +56,7 @@ public class TraceObject {
 		return false;
 	}
 
-	public TraceFieldAccess getFieldAccess(Object field) {
+	public TraceField getFieldAccess(Object field) {
 		if(fieldsMap.containsKey(field))
 			return fieldsMap.get(field);
 		return null;
@@ -59,7 +67,7 @@ public class TraceObject {
 		String result = constructor.toString() + "\n";
 		for(TraceMethod mr : methodCalls) 
 			result += mr.toString() + "\n";
-		for(TraceFieldAccess fa : fieldsMap.values())
+		for(TraceField fa : fieldsMap.values())
 			result += fa.toString();
 		return result;
 	}

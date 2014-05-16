@@ -11,6 +11,11 @@ import javassist.expr.FieldAccess;
 import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
+/**
+ * TraceTranslator:
+ *  Listener that is notified whenever a client class is about to be loaded
+ *  through method onLoad
+ */
 public class TraceTranslator implements Translator {
 
 	private final String objectTemplate = 
@@ -60,29 +65,23 @@ public class TraceTranslator implements Translator {
 		ctMethod.instrument(new ExprEditor() {
 			public void edit(FieldAccess fieldAccess) 
 					throws CannotCompileException {
-				try {
-					if(TraceVMImplementation.isClassValid(fieldAccess.getClassName())) {
-						if(!fieldAccess.getField().getType().isPrimitive()) {
-							if(fieldAccess.isWriter()) {
-								fieldAccess.replace(String.format(
-										fieldTemplate,
-										"true",
-										fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
-										fieldAccess.getLineNumber(), 
-										fieldAccess.getFileName()));
-							}
-							if(fieldAccess.isReader()) {
-								fieldAccess.replace(String.format(
-										fieldTemplate,
-										"false",
-										fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
-										fieldAccess.getLineNumber(), 
-										fieldAccess.getFileName()));
-							}
-						}
+				if(TraceVMImplementation.isClassValid(fieldAccess.getClassName())) {
+					if(fieldAccess.isWriter()) {
+						fieldAccess.replace(String.format(
+								fieldTemplate,
+								"true",
+								fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
+								fieldAccess.getLineNumber(), 
+								fieldAccess.getFileName()));
 					}
-				} catch (NotFoundException e) {
-					e.printStackTrace();
+					if(fieldAccess.isReader()) {
+						fieldAccess.replace(String.format(
+								fieldTemplate,
+								"false",
+								fieldAccess.getClassName() + "." + fieldAccess.getFieldName(),
+								fieldAccess.getLineNumber(), 
+								fieldAccess.getFileName()));
+					}
 				}
 			}
 		});
